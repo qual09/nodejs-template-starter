@@ -1,0 +1,16 @@
+body {
+  background: lightgray;
+  font-family: Calibri, Helvetica, sans-serif;
+  font-size: 4rem;
+  font-weight: 700;
+}
+
+section {
+  background-color: white;
+  border: 1px solid gray;
+  border-radius: 10px;
+  margin: 10px auto;
+  max-width: 1000px;
+  padding: 1em;
+  text-align: center;
+}

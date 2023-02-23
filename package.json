@@ -1,0 +1,31 @@
+{
+  "name": "nodejs-sandbox",
+  "version": "1.0.0",
+  "description": "nodejs sandbox",
+  "main": "app.js",
+  "scripts": {
+    "dev": "nodemon app.js",
+    "start": "node app.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/qual09/nodejs-sandbox.git"
+  },
+  "author": "Hieu CPX",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/qual09/nodejs-sandbox/issues"
+  },
+  "homepage": "https://github.com/qual09/nodejs-sandbox#readme",
+  "dependencies": {
+    "cookie-parser": "^1.4.6",
+    "cors": "^2.8.5",
+    "dotenv": "^16.0.3",
+    "express": "^4.18.2",
+    "nodemon": "^2.0.20"
+  },
+  "engines": {
+    "node": ">=14"
+  }
+}

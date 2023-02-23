@@ -1,0 +1,14 @@
+body {
+  background: lightgray;
+  font-family: Calibri, Helvetica, sans-serif;
+}
+
+section {
+  background-color: white;
+  border: 1px solid black;
+  border-radius: 10px;
+  margin: 10px auto;
+  max-width: 1000px;
+  padding: 1em;
+  text-align: center;
+}
