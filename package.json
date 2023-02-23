@@ -1,7 +1,7 @@
 {
   "name": "nodejs-template-starter",
   "version": "1.0.0",
-  "description": "nodejs sandbox",
+  "description": "Starter template for a new nodejs project.",
   "main": "app.js",
   "scripts": {
     "dev": "nodemon app.js",
