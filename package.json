@@ -1,5 +1,5 @@
 {
-  "name": "nodejs-sandbox",
+  "name": "nodejs-template-starter",
   "version": "1.0.0",
   "description": "nodejs sandbox",
   "main": "app.js",
@@ -10,14 +10,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/qual09/nodejs-sandbox.git"
+    "url": "git+https://github.com/qual09/nodejs-template-starter.git"
   },
   "author": "Hieu CPX",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/qual09/nodejs-sandbox/issues"
+    "url": "https://github.com/qual09/nodejs-template-starter/issues"
   },
-  "homepage": "https://github.com/qual09/nodejs-sandbox#readme",
+  "homepage": "https://github.com/qual09/nodejs-template-starter#readme",
   "dependencies": {
     "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",

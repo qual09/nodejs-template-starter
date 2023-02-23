@@ -1,4 +1,4 @@
-# nodejs-sandbox
+# nodejs-template-starter
 
 Remember to create .env file in root folder. Sample below:
 
