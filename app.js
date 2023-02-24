@@ -1,6 +1,6 @@
 // Imports
-const express = require("express");
-const path = require("path");
+const express = require('express');
+const path = require('path');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const dotenv = require('dotenv');
@@ -37,7 +37,7 @@ app.get(`${apiUrl}/status`, (req, res) => {
 const HOSTNAME = process.env.HOSTNAME || 'localhost';
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(process.env.TEST);
+  console.log(process.env.TEST || '');
   console.log(`Server started on http://${HOSTNAME}:${PORT}`);
 });
 
