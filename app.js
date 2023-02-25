@@ -28,10 +28,10 @@ app.use('/', express.static(__dirname + '/public'));
 app.use('/server', express.static(path.join(__dirname, 'views')));
 
 // REST API
-app.use(`${apiUrl}/user`, userRoutes);
-app.get(`${apiUrl}/status`, (req, res) => {
-  res.json({ info: 'Node.js, Express, and Postgres API' });
+app.get(`${apiUrl}/`, (req, res) => {
+  res.json({ info: 'Nodejs REST API' });
 });
+app.use(`${apiUrl}/user`, userRoutes);
 
 // Start
 const HOSTNAME = process.env.HOSTNAME || 'localhost';

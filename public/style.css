@@ -1,8 +1,6 @@
 body {
   background: lightgray;
   font-family: Calibri, Helvetica, sans-serif;
-  font-size: 4rem;
-  font-weight: 700;
 }
 
 section {
@@ -12,5 +10,8 @@ section {
   margin: 10px auto;
   max-width: 1000px;
   padding: 1em;
-  text-align: center;
+}
+
+.list-api {
+  font-size: 1.1em;
 }
