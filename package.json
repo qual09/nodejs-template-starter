@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "nodemon src/app.ts",
     "build": "rimraf dist/ && tsc -p . && copyfiles -u 1 src/views/* dist/",
-    "start": "node src/app.js",
+    "start": "node dist/app.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "stop": "pkill node",
     "stop-win": "taskkill /f /im node.exe"
