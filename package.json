@@ -6,9 +6,8 @@
   "type": "commonjs",
   "scripts": {
     "dev": "nodemon src/app.ts",
-    "build": "rimraf dist/ && tsc -p . && copyfiles -u 1 src/views/* dist/",
+    "build": "npm install && rimraf dist/ && tsc -p . && copyfiles -u 1 src/views/* dist/",
     "start": "node dist/app.js",
-    "test": "echo \"Error: no test specified\" && exit 1",
     "stop": "pkill node",
     "stop-win": "taskkill /f /im node.exe"
   },
