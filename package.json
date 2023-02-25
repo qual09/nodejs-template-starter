@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "nodemon src/app.js",
     "build": "npm install",
-    "start": "node src/app.js",
+    "start": "node src/app.js &",
     "stop": "pkill node",
     "stop-win": "taskkill /f /im node.exe"
   },
