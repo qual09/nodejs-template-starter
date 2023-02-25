@@ -1,15 +1,29 @@
+* {
+  box-sizing: border-box;
+}
+
 body {
   background: lightgray;
   font-family: Calibri, Helvetica, sans-serif;
+}
+
+.container {
+  margin: 10px auto;
+  max-width: 1000px;
 }
 
 section {
   background-color: white;
   border: 1px solid gray;
   border-radius: 10px;
-  margin: 10px auto;
-  max-width: 1000px;
   padding: 1em;
+}
+
+footer {
+  color: gray;
+  font-size: 0.9em;
+  margin-top: 1em;
+  text-align: right;
 }
 
 .list-api {
