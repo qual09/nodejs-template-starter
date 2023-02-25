@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "nodemon src/app.js",
     "start": "node src/app.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "stop": "pkill node",
+    "stop-win": "taskkill /f /im node.exe"
   },
   "repository": {
     "type": "git",
@@ -26,7 +28,7 @@
     "pg": "^8.9.0"
   },
   "engines": {
-    "node": ">=14"
+    "node": ">=18"
   },
   "devDependencies": {
     "nodemon": "^2.0.20"
