@@ -19,16 +19,16 @@ const userColumns: string = `
 `;
 
 const userColumnsResponse: string = `
-	user_id as 'userId',
-	first_name as 'firstName',
-	last_name as 'lastName',
-	email,
-	photo_url as 'photoURL',
-	approver,
-	create_date as 'createDate',
-	create_user as 'createUser',
-	update_date as 'updateDate',
-	update_user as 'updateUser'
+  user_id as "userId",
+  first_name as "firstName",
+  last_name as "lastName",
+  email,
+  photo_url as "photoURL",
+  approver,
+  create_date as "createDate",
+  create_user as "createUser",
+  update_date as "updateDate",
+  update_user as "updateUser"
 `;
 
 // Get Users List

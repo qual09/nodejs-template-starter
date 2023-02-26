@@ -150,8 +150,8 @@ async function getRefreshToken(refreshToken: string) {
     const queryParams: string[] = [refreshToken];
     const query: string = `
 			SELECT 
-				user_id as 'userId',
-				refresh_token as 'refreshToken'
+				user_id as "userId",
+				refresh_token as "refreshToken"
 			FROM tokens  
 			WHERE refresh_token = $1
     `;
@@ -169,7 +169,9 @@ async function createRefreshToken(refreshToken: string, userId: string) {
 			INSERT INTO tokens (refresh_token, user_id) 
       VALUES ($1, $2)
       ON CONFLICT DO NOTHING
-      RETURNING user_id as 'userId', refresh_token as 'refreshToken'
+      RETURNING 
+        user_id as "userId", 
+        refresh_token as "refreshToken"
     `;
     const response: QueryResult = await executeQery(query, queryParams);
     const responseToken: string | null = response.rows[0];
@@ -184,8 +186,11 @@ async function deleteUserRefreshTokens(userId: string) {
     const queryParams: string[] = [userId];
     const query: string = `
 			DELETE FROM tokens  
-      WHERE user_id = $1
-      RETURNING user_id as 'userId', refresh_token as 'refreshToken'
+      WHERE 
+        user_id = $1
+      RETURNING 
+        user_id as "userId", 
+        refresh_token as "refreshToken"
     `;
     const response: QueryResult = await executeQery(query, queryParams);
     const result: any[] = response.rows;
@@ -200,8 +205,11 @@ async function deleteRefreshToken(refreshToken: string) {
     const queryParams: string[] = [refreshToken];
     const query: string = `
 			DELETE FROM tokens  
-			WHERE refresh_token = $1
-			RETURNING user_id as 'userId', refresh_token as 'refreshToken'
+			WHERE 
+        refresh_token = $1
+			RETURNING 
+        user_id as "userId", 
+        refresh_token as "refreshToken"
     `;
     const response: QueryResult = await executeQery(query, queryParams);
     const result: any[] = response.rows;
