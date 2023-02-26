@@ -43,9 +43,9 @@ userRoutes.get('/', authenticateUser, async (req, res, next) => {
     const response: QueryResult = await executeQery(query, queryParams);
     const usersList: User[] = response.rows;
     res.status(200).json(usersList);
-  } catch (e) {
+  } catch (error: any) {
     res.status(500).json({ error: 'Internal server error.' });
-    next(e);
+    next(error);
   }
 });
 
@@ -67,9 +67,9 @@ userRoutes.get('/:userId', authenticateUser, async (req: Request, res: Response,
       return;
     }
     res.status(200).json(userSelected);
-  } catch (e) {
+  } catch (error: any) {
     res.status(500).json({ error: 'Internal server error.' });
-    next(e);
+    next(error);
   }
 });
 
@@ -106,9 +106,9 @@ userRoutes.post('/', authenticateUser, async (req: Request, res: Response, next:
       throw new Error('Failed to create a new User.');
     }
     res.status(201).json(userCreated);
-  } catch (e) {
+  } catch (error: any) {
     res.status(500).json({ error: 'Internal server error.' });
-    next(e);
+    next(error);
   }
 });
 
