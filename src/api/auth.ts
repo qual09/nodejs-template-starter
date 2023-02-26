@@ -50,24 +50,9 @@ authRoutes.post('/', authenticateApp, async (req: Request, res: Response, next: 
   }
 });
 
-// Logout: Delete Tokens
-authRoutes.delete('/logout', authenticateApp, async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const refreshToken: string = req.body.refresh_token;
-    if (!refreshToken) {
-      res.status(401).json({ error: 'Unauthorized. Error code: MCRT401LGT' });
-    } else {
-      await deleteRefreshToken(refreshToken);
-      
-      // TODO: invalidate jwt tokens?
-      
-      // res.sendStatus(204);
-      res.status(201).json({ message: 'Successfully logged out.' });
-    }
-  } catch (error: any) {
-    res.sendStatus(500);
-    next(error);
-  }
+// Logout
+authRoutes.delete('/logout', authenticateApp, async (req: Request, res: Response) => {
+  res.sendStatus(204);
 });
 
 async function login(userId: string, password: string) {
@@ -78,13 +63,10 @@ async function login(userId: string, password: string) {
     const validPassword = await bcrypt.compare(password, hashPassword);
     if (!validPassword) return null;
 
-    // Delete all previous refreshTokens 
-    await deleteUserRefreshTokens(userId);
-
     // Generate new Tokens
-    const user: { userId: string } = { userId: userId };
-    const accessToken: string = generateAccessToken(user);
-    const refreshToken: string = generateRefreshToken(user);
+    const newToken: { userId: string } = { userId: userId };
+    const accessToken: string = generateAccessToken(newToken);
+    const refreshToken: string = generateRefreshToken(newToken);
 
     return { access_token: accessToken, refresh_token: refreshToken };
   } catch (error: any) {
@@ -94,48 +76,39 @@ async function login(userId: string, password: string) {
 
 async function generateNewTokens(refreshToken: string) {
   try {
-    const token: { userId: string, refreshToken: string } | null = await getRefreshToken(refreshToken);
-    if (!token || !token.userId || !token.refreshToken) {
-      return null;
-    } else {
-      const newTokens: any = jwt.verify(
-        token.refreshToken,
-        process.env.REFRESH_TOKEN_SECRET || '',
-        (err: any, data: any) => {
-          if (err) return null;
-          const user: { userId: string } = { userId: token.userId };
-          const newAccessToken: string = generateAccessToken(user);
-          const newRefreshToken: string = generateRefreshToken(user);
-          // Delete Previous Token (delay for current requests to finish)
-          setTimeout(() => {
-            deleteRefreshToken(refreshToken);
-          }, 10000);
-          return { access_token: newAccessToken, refresh_token: newRefreshToken };
-        }
-      );
-      return newTokens;
-    }
+    const newTokens: any = jwt.verify(
+      refreshToken,
+      process.env.REFRESH_TOKEN_SECRET || '',
+      (err: any, data: any) => {
+        if (err) return null;
+        // Generate new Tokens
+        const newToken: { userId: string } = { userId: data.userId };
+        const newAccessToken: string = generateAccessToken(newToken);
+        const newRefreshToken: string = generateRefreshToken(newToken);
+        return { access_token: newAccessToken, refresh_token: newRefreshToken };
+      }
+    );
+    return newTokens;
   } catch (error: any) {
     throw error;
   }
 }
 
-function generateAccessToken(user: { userId: string }) {
+function generateAccessToken(newToken: { userId: string }) {
   const refreshToken: string = jwt.sign(
-    user,
+    newToken,
     process.env.ACCESS_TOKEN_SECRET || '',
-    { expiresIn: '8h' }
+    { expiresIn: '1h' }
   );
   return refreshToken;
 }
 
-function generateRefreshToken(user: { userId: string }) {
+function generateRefreshToken(newToken: { userId: string }) {
   const refreshToken: string = jwt.sign(
-    user,
+    newToken,
     process.env.REFRESH_TOKEN_SECRET || '',
-    { expiresIn: '24h' }
+    { expiresIn: '8h' }
   );
-  createRefreshToken(refreshToken, user.userId);
   return refreshToken;
 }
 
@@ -147,87 +120,13 @@ async function getUserPassword(userId: string) {
       FROM users
       WHERE user_id = $1
     `;
-    const response: QueryResult = await executeQery(query, queryParams);
+    const queryResult: QueryResult = await executeQery(query, queryParams);
     // User not found
-    if (!response || response.rows.length < 1) {
+    if (!queryResult || queryResult.rows.length !== 1) {
       return null;
     }
-    return response.rows[0].password;
-  } catch (error: any) {
-    throw error;
-  }
-}
-
-async function getRefreshToken(refreshToken: string) {
-  try {
-    const queryParams: string[] = [refreshToken];
-    const query: string = `
-			SELECT 
-				user_id as "userId",
-				refresh_token as "refreshToken"
-			FROM tokens  
-			WHERE refresh_token = $1
-    `;
-    const response: QueryResult = await executeQery(query, queryParams);
-    const responseToken: { userId: string, refreshToken: string } | null = response.rows[0];
-    return responseToken;
-  } catch (error: any) {
-    throw error;
-  }
-}
-
-async function createRefreshToken(refreshToken: string, userId: string) {
-  try {
-    const queryParams: string[] = [refreshToken, userId];
-    const query: string = `
-			INSERT INTO tokens (refresh_token, user_id) 
-      VALUES ($1, $2)
-      ON CONFLICT DO NOTHING
-      RETURNING 
-        user_id as "userId", 
-        refresh_token as "refreshToken"
-    `;
-    const response: QueryResult = await executeQery(query, queryParams);
-    const responseToken: { userId: string, refreshToken: string } | null = response.rows[0];
-    return responseToken;
-  } catch (error: any) {
-    throw error;
-  }
-}
-
-async function deleteUserRefreshTokens(userId: string) {
-  try {
-    const queryParams: string[] = [userId];
-    const query: string = `
-			DELETE FROM tokens  
-      WHERE 
-        user_id = $1
-      RETURNING 
-        user_id as "userId", 
-        refresh_token as "refreshToken"
-    `;
-    const response: QueryResult = await executeQery(query, queryParams);
-    const result: any[] = response.rows;
-    return result;
-  } catch (error: any) {
-    throw error;
-  }
-}
-
-async function deleteRefreshToken(refreshToken: string) {
-  try {
-    const queryParams: string[] = [refreshToken];
-    const query: string = `
-			DELETE FROM tokens  
-			WHERE 
-        refresh_token = $1
-			RETURNING 
-        user_id as "userId", 
-        refresh_token as "refreshToken"
-    `;
-    const response: QueryResult = await executeQery(query, queryParams);
-    const result: any[] = response.rows;
-    return result;
+    const userPassword: string = queryResult.rows[0].password;
+    return userPassword;
   } catch (error: any) {
     throw error;
   }

@@ -5,8 +5,8 @@ export async function executeQery(query: string, queryParams: (string | number |
   try {
     const result = await client.query(query, queryParams);
     return result;
-  } catch (e) {
-    throw e;
+  } catch (error) {
+    throw error;
   } finally {
     // Make sure to release the client before any error handling,
     // just in case the error handling itself throws an error.

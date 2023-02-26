@@ -4,30 +4,6 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-export function authenticateUser(req: Request, res: Response, next: NextFunction) {
-  const authHeader: string = req.headers.authorization || '';
-  const token: string = authHeader.split(' ')[1];
-  // Check for Bearer auth header
-  if (!authHeader || authHeader.indexOf('Bearer ') === -1 || !token) {
-    // Missing Authorization Header or Token
-    return res.status(401).json({ error: 'Unauthorized. Error code: MCUTH401' });
-  }
-  
-  // TODO: check if present in db?
-
-  // Verify Access Token
-  jwt.verify(
-    token,
-    process.env.ACCESS_TOKEN_SECRET || '',
-    (err: any, data: any) => {
-      if (err) return res.status(401).json({ error: 'Unauthorized. Error code: ICUT401' });
-      // Set currentUserId in a req parameter
-      req.params.currentUserId = data.userId; 
-      next();
-    }
-  );
-}
-
 export function authenticateApp(req: Request, res: Response, next: NextFunction) {
   const authHeader: string = req.headers.authorization || '';
   const base64Credentials: string = authHeader.split(' ')[1];
@@ -49,4 +25,25 @@ export function authenticateApp(req: Request, res: Response, next: NextFunction)
     return res.status(401).json({ error: 'Unauthorized. Error code: ICAT401' });
   }
   next();
+}
+
+export function authenticateUser(req: Request, res: Response, next: NextFunction) {
+  const authHeader: string = req.headers.authorization || '';
+  const token: string = authHeader.split(' ')[1];
+  // Check for Bearer auth header
+  if (!authHeader || authHeader.indexOf('Bearer ') === -1 || !token) {
+    // Missing Authorization Header or Token
+    return res.status(401).json({ error: 'Unauthorized. Error code: MCUTH401' });
+  }
+  // Verify Access 
+  jwt.verify(
+    token,
+    process.env.ACCESS_TOKEN_SECRET || '',
+    (err: any, data: any) => {
+      if (err) return res.status(401).json({ error: 'Unauthorized. Error code: ICUT401' });
+      // Set currentUserId in a request parameter
+      req.params.currentUserId = data.userId;
+      next();
+    }
+  );
 }

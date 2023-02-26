@@ -40,8 +40,8 @@ userRoutes.get('/', authenticateUser, async (req, res, next) => {
       SELECT ${userColumnsResponse}
       FROM users
     `;
-    const response: QueryResult = await executeQery(query, queryParams);
-    const usersList: User[] = response.rows;
+    const queryResult: QueryResult = await executeQery(query, queryParams);
+    const usersList: User[] = queryResult.rows;
     res.status(200).json(usersList);
   } catch (error: any) {
     res.status(500).json({ error: 'Internal server error.' });
@@ -59,13 +59,13 @@ userRoutes.get('/:userId', authenticateUser, async (req: Request, res: Response,
       FROM users
       WHERE user_id = $1
     `;
-    const response: QueryResult = await executeQery(query, queryParams);
-    const userSelected: User = response.rows[0];
-    if (!response || !userSelected) {
+    const queryResult: QueryResult = await executeQery(query, queryParams);
+    if (!queryResult || queryResult.rows.length !== 1) {
       // throw new Error('Nof found!');
       res.status(404).json({ error: 'User not found.' });
       return;
     }
+    const userSelected: User = queryResult.rows[0];
     res.status(200).json(userSelected);
   } catch (error: any) {
     res.status(500).json({ error: 'Internal server error.' });
@@ -100,14 +100,75 @@ userRoutes.post('/', authenticateUser, async (req: Request, res: Response, next:
       ON CONFLICT DO NOTHING
       RETURNING ${userColumnsResponse}
     `;
-    const response: QueryResult = await executeQery(query, queryParams);
-    const userCreated: User = response.rows[0];
-    if (!response || !userCreated) {
-      throw new Error('Failed to create a new User.');
+    const queryResult: QueryResult = await executeQery(query, queryParams);
+    if (!queryResult || queryResult.rows.length !== 1) {
+      throw new Error('Failed to create a new User. Database error.');
     }
+    const userCreated: User = queryResult.rows[0];
     res.status(201).json(userCreated);
   } catch (error: any) {
     res.status(500).json({ error: 'Internal server error.' });
+    next(error);
+  }
+});
+
+// Update User
+userRoutes.put('/', authenticateUser, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const user: User = JSON.parse(JSON.stringify(req.body));
+    if (!user) {
+      throw new Error('Failed to update User. Invalid data received.');
+    }
+    user.updateUser = req.params.currentUserId;
+    const queryParams: (string | number | boolean | null)[] = [
+      user.userId,
+      user.firstName,
+      user.lastName,
+      user.email,
+      user.photoURL,
+      user.approver,
+      user.updateUser
+    ];
+    const query: string = `
+      UPDATE users
+      SET
+        first_name = $2,
+        last_name = $3,
+        email = $4,
+        photo_url = $5,
+        approver = $6,
+        update_user = $7,
+        update_date = now()
+      WHERE user_id = $1
+      RETURNING ${userColumnsResponse}
+    `;
+    const queryResult: QueryResult = await executeQery(query, queryParams);
+    if (!queryResult || queryResult.rows.length !== 1) {
+      throw new Error('Failed to update User. Database error.');
+    }
+    const userUpdated: User = queryResult.rows[0];
+    res.status(201).json(userUpdated);
+  } catch (error: any) {
+    res.status(500).json({ error: 'Internal server error.' });
+    next(error);
+  }
+});
+
+// Delete User
+userRoutes.delete('/:userId', authenticateUser, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const userId: string = req.params.userId;
+    const queryParams: string[] = [userId];
+		const query: string = `
+			DELETE FROM users
+			WHERE user_id = $1
+			RETURNING ${userColumnsResponse}
+		`;
+		const queryResult: QueryResult = await executeQery(query, queryParams);
+    const response = queryResult.rowCount ? queryResult.rows[0] : null;
+    res.status(204).json(response);
+  } catch (error: any) {
+    res.status(500).json({ error: "Internal server error" });
     next(error);
   }
 });
@@ -119,12 +180,12 @@ userRoutes.delete('/', authenticateUser, async (req: Request, res: Response, nex
     const query: string = `
 			DELETE FROM users
     `;
-    const response: QueryResult = await executeQery(query, queryParams);
-    const result: any[] = response.rows;
+    const queryResult: QueryResult = await executeQery(query, queryParams);
+    const result: any[] = queryResult.rows;
     if (result.length !== 0) {
       throw new Error('Failed to delete All Users.');
     }
-    res.status(201).json({ message: 'All Users Deleted.' });
+    res.status(201).json({ message: 'Success. All Users Deleted.' });
   } catch (error: any) {
     res.status(500).json({ error: 'Internal server error.' });
     next(error);
