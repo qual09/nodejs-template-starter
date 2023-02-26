@@ -1,4 +1,4 @@
-import { GlobalModel } from "./global";
+import { GlobalModel } from './global';
 
 export interface Token extends GlobalModel {
   token_id: number;

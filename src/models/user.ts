@@ -1,4 +1,4 @@
-import { GlobalModel } from "./global";
+import { GlobalModel } from './global';
 
 export interface User extends GlobalModel {
   userId: string;

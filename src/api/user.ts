@@ -19,16 +19,16 @@ const userColumns: string = `
 `;
 
 const userColumnsResponse: string = `
-	user_id as "userId",
-	first_name as "firstName",
-	last_name as "lastName",
+	user_id as 'userId',
+	first_name as 'firstName',
+	last_name as 'lastName',
 	email,
-	photo_url as "photoURL",
+	photo_url as 'photoURL',
 	approver,
-	create_date as "createDate",
-	create_user as "createUser",
-	update_date as "updateDate",
-	update_user as "updateUser"
+	create_date as 'createDate',
+	create_user as 'createUser',
+	update_date as 'updateDate',
+	update_user as 'updateUser'
 `;
 
 // Get Users List
@@ -40,7 +40,7 @@ userRoutes.get('/', async (req, res, next) => {
     const usersList: User[] = response.rows;
     res.status(200).json(usersList);
   } catch (e) {
-    res.status(500).json({ error: "Internal server error." });
+    res.status(500).json({ error: 'Internal server error.' });
     next(e);
   }
 });
@@ -59,12 +59,12 @@ userRoutes.get('/:userId', async (req: Request, res: Response, next: NextFunctio
     const userSelected: User = response.rows[0];
     if (!response || !userSelected) {
       // throw new Error('Nof found!');
-      res.status(404).json({ error: "User not found." });
+      res.status(404).json({ error: 'User not found.' });
       return;
     }
     res.status(200).json(userSelected);
   } catch (e) {
-    res.status(500).json({ error: "Internal server error." });
+    res.status(500).json({ error: 'Internal server error.' });
     next(e);
   }
 });
@@ -102,7 +102,7 @@ userRoutes.post('/', async (req: Request, res: Response, next: NextFunction) => 
     }
     res.status(201).json(userCreated);
   } catch (e) {
-    res.status(500).json({ error: "Internal server error." });
+    res.status(500).json({ error: 'Internal server error.' });
     next(e);
   }
 });
@@ -121,7 +121,7 @@ userRoutes.delete('/', async (req: Request, res: Response, next: NextFunction) =
     }
     res.status(201).json({ message: 'All Users Deleted.' });
   } catch (e: any) {
-    res.status(500).json({ error: "Internal server error." });
+    res.status(500).json({ error: 'Internal server error.' });
     next(e);
   }
 });
