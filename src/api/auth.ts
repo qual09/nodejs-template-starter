@@ -13,17 +13,17 @@ authRoutes.post('/', authenticateApp, async (req: Request, res: Response, next: 
     const grantType: string = req.body.grant_type;
     if (!grantType) {
       // Unauthorized
-      res.status(401).json({ error: 'Unauthorized.' });
+      res.status(401).json({ error: 'Unauthorized. Error code: MCGT401' });
     } else if (grantType === 'password') {
       // Login
       const userId: string = req.body.username;
       const password: string = req.body.password;
       if (!userId || !password) {
-        res.status(401).json({ error: 'Unauthorized.' });
+        res.status(401).json({ error: 'Unauthorized. Error code: MCUP401' });
       } else {
         const userAuth: any = await login(userId, password);
         if (!userAuth) {
-          res.status(401).json({ error: 'The username or password is invalid.' });
+          res.status(401).json({ error: 'Unauthorized. Error code: ICUP401' });
         } else {
           res.status(200).json(userAuth);
         }
@@ -32,17 +32,17 @@ authRoutes.post('/', authenticateApp, async (req: Request, res: Response, next: 
       // Refresh Token
       const refreshToken: string = req.body.refresh_token;
       if (!refreshToken) {
-        res.status(401).json({ error: 'Unauthorized.' });
+        res.status(401).json({ error: 'Unauthorized. Error code: MCRT401' });
       } else {
         const newTokens: any = await generateNewTokens(refreshToken);
         if (newTokens) {
           res.status(201).json(newTokens);
         } else {
-          res.status(401).json({ error: 'Unauthorized.' });
+          res.status(401).json({ error: 'Unauthorized. Error code: ISENT401' });
         }
       }
     } else {
-      res.status(401).json({ error: 'Unauthorized.' });
+      res.status(401).json({ error: 'Unauthorized. Error code: ICGT401' });
     }
   } catch (error: any) {
     res.sendStatus(500);
@@ -56,7 +56,7 @@ authRoutes.delete('/logout', authenticateApp, async (req: Request, res: Response
   try {
     const refreshToken: string = req.body.refresh_token;
     if (!refreshToken) {
-      res.status(400).json({ error: 'Required fields are missing.' });
+      res.status(401).json({ error: 'Unauthorized. Error code: MCRT401LGT' });
     } else {
       await deleteRefreshToken(refreshToken);
       // res.sendStatus(204);
