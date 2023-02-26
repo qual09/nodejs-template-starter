@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "nodemon src/app.ts",
     "build": "npm install && rimraf dist/ && tsc -p . && copyfiles -u 1 src/views/* dist/",
-    "start": "node dist/app.js &",
+    "start": "node dist/app.js",
     "stop": "pkill node",
     "stop-win": "taskkill /f /im node.exe"
   },
