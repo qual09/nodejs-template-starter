@@ -3,7 +3,6 @@
   "version": "1.0.0",
   "description": "Starter template for a new nodejs project.",
   "main": "app.js",
-  "type": "commonjs",
   "scripts": {
     "dev": "nodemon src/app.ts",
     "build": "npm install && rimraf dist/ && tsc -p . && copyfiles -u 1 src/views/* dist/",
