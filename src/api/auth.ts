@@ -7,7 +7,7 @@ import { authenticateApp } from '../utils/auth';
 
 export const authRoutes = Router();
 
-// Grant new token or refresh current
+// Login / Refresh Access: Grant new token or refresh current
 authRoutes.post('/', authenticateApp, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const grantType: string = req.body.grant_type;
@@ -34,7 +34,7 @@ authRoutes.post('/', authenticateApp, async (req: Request, res: Response, next: 
       if (!refreshToken) {
         res.status(401).json({ error: 'Unauthorized. Error code: MCRT401' });
       } else {
-        const newTokens: any = await generateNewTokens(refreshToken);
+        const newTokens: { access_token: string, refresh_token: string } | null = await generateNewTokens(refreshToken);
         if (newTokens) {
           res.status(201).json(newTokens);
         } else {
@@ -50,8 +50,7 @@ authRoutes.post('/', authenticateApp, async (req: Request, res: Response, next: 
   }
 });
 
-// Logout and delete Tokens
-// TODO: verify, not working?
+// Logout: Delete Tokens
 authRoutes.delete('/logout', authenticateApp, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const refreshToken: string = req.body.refresh_token;
@@ -59,6 +58,9 @@ authRoutes.delete('/logout', authenticateApp, async (req: Request, res: Response
       res.status(401).json({ error: 'Unauthorized. Error code: MCRT401LGT' });
     } else {
       await deleteRefreshToken(refreshToken);
+      
+      // TODO: invalidate jwt tokens?
+      
       // res.sendStatus(204);
       res.status(201).json({ message: 'Successfully logged out.' });
     }
@@ -92,7 +94,7 @@ async function login(userId: string, password: string) {
 
 async function generateNewTokens(refreshToken: string) {
   try {
-    const token: { userId: string, refreshToken: string } = await getRefreshToken(refreshToken);
+    const token: { userId: string, refreshToken: string } | null = await getRefreshToken(refreshToken);
     if (!token || !token.userId || !token.refreshToken) {
       return null;
     } else {
@@ -167,7 +169,8 @@ async function getRefreshToken(refreshToken: string) {
 			WHERE refresh_token = $1
     `;
     const response: QueryResult = await executeQery(query, queryParams);
-    return response.rowCount ? response.rows[0] : null;
+    const responseToken: { userId: string, refreshToken: string } | null = response.rows[0];
+    return responseToken;
   } catch (error: any) {
     throw error;
   }
@@ -185,7 +188,7 @@ async function createRefreshToken(refreshToken: string, userId: string) {
         refresh_token as "refreshToken"
     `;
     const response: QueryResult = await executeQery(query, queryParams);
-    const responseToken: string | null = response.rows[0];
+    const responseToken: { userId: string, refreshToken: string } | null = response.rows[0];
     return responseToken;
   } catch (error: any) {
     throw error;

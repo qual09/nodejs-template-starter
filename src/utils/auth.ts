@@ -10,14 +10,17 @@ export function authenticateUser(req: Request, res: Response, next: NextFunction
   // Check for Bearer auth header
   if (!authHeader || authHeader.indexOf('Bearer ') === -1 || !token) {
     // Missing Authorization Header or Token
-    return res.status(401).json({ error: 'Unauthorized. Error code: MCU401' });
+    return res.status(401).json({ error: 'Unauthorized. Error code: MCUTH401' });
   }
+  
+  // TODO: check if present in db?
+
   // Verify Access Token
   jwt.verify(
     token,
     process.env.ACCESS_TOKEN_SECRET || '',
     (err: any, data: any) => {
-      if (err) return res.status(401).json({ error: 'Invalid Token. Error code: ICU401' });
+      if (err) return res.status(401).json({ error: 'Unauthorized. Error code: ICUT401' });
       // Set currentUserId in a req parameter
       req.params.currentUserId = data.userId; 
       next();
@@ -31,7 +34,7 @@ export function authenticateApp(req: Request, res: Response, next: NextFunction)
   // Check for Basic auth header
   if (!authHeader || authHeader.indexOf('Basic ') === -1 || !base64Credentials) {
     // Missing Authorization Header or Credentials
-    return res.status(401).json({ error: 'Unauthorized. Error code: MCA401' });
+    return res.status(401).json({ error: 'Unauthorized. Error code: MCATH401' });
   }
   // Verify Credentials
   const credentials: string = Buffer.from(
@@ -43,7 +46,7 @@ export function authenticateApp(req: Request, res: Response, next: NextFunction)
     oauthClientSecret !== process.env.OAUTH_CLIENT_SECRET
   ) {
     // Invalid Authentication Credentials
-    return res.status(401).json({ error: 'Unauthorized. Error code: ICA401' });
+    return res.status(401).json({ error: 'Unauthorized. Error code: ICAT401' });
   }
   next();
 }
