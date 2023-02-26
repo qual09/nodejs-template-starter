@@ -1,6 +1,6 @@
 import { pool } from './connection';
 
-export async function executeQery(query: string, queryParams: string[] | number[] | null[]) {
+export async function executeQery(query: string, queryParams: (string | number | boolean | null)[]) {
   const client = await pool.connect();
   try {
     const result = await client.query(query, queryParams);
