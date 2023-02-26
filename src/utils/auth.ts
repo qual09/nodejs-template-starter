@@ -4,7 +4,7 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-export function authenticateToken(req: Request, res: Response, next: NextFunction) {
+export function authenticateUser(req: Request, res: Response, next: NextFunction) {
   const authHeader: string = req.headers.authorization || '';
   const token: string = authHeader.split(' ')[1];
   // Check for Bearer auth header
@@ -13,11 +13,15 @@ export function authenticateToken(req: Request, res: Response, next: NextFunctio
     return res.status(401).json({ error: 'Unauthorized' });
   }
   // Verify Access Token
-  jwt.verify(token, process.env.ACCESS_TOKEN_SECRET || '', (err: any, user: any) => {
-    if (err) return res.status(401).json({ error: 'invalid_token' });
-    req.params.userId = user.userId;
-    next();
-  });
+  jwt.verify(
+    token,
+    process.env.ACCESS_TOKEN_SECRET || '',
+    (err: any, user: any) => {
+      if (err) return res.status(401).json({ error: 'invalid_token' });
+      req.params.userId = user.userId; // TODO: verify
+      next();
+    }
+  );
 }
 
 export function authenticateApp(req: Request, res: Response, next: NextFunction) {
@@ -29,19 +33,16 @@ export function authenticateApp(req: Request, res: Response, next: NextFunction)
     return res.status(401).json({ error: 'Unauthorized' });
   }
   // Verify Credentials
-  const credentials: string = Buffer.from(base64Credentials, 'base64').toString('ascii');
-  const [oauthClient, oauthSecret]: string[] = credentials.split(':');
-  if (oauthClient !== process.env.OAUTH_CLIENT || oauthSecret !== process.env.OAUTH_SECRET) {
+  const credentials: string = Buffer.from(
+    base64Credentials, 'base64'
+  ).toString('ascii');
+  const [oauthClientId, oauthClientSecret]: string[] = credentials.split(':');
+  if (
+    oauthClientId !== process.env.OAUTH_CLIENT_ID ||
+    oauthClientSecret !== process.env.OAUTH_CLIENT_SECRET
+  ) {
     // Invalid Authentication Credentials
     return res.status(401).json({ error: 'Unauthorized' });
-  }
-  next();
-}
-
-export function authUser(req: Request, res: Response, next: NextFunction) {
-  if (req.params.user == null) {
-    res.status(403);
-    return res.send('You need to sign in');
   }
   next();
 }

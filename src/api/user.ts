@@ -1,8 +1,9 @@
 import { Router, Request, Response, NextFunction } from 'express';
-import { executeQery } from '../db/query';
 import { QueryResult } from 'pg';
 import bcrypt from 'bcrypt';
+import { executeQery } from '../db/query';
 import { User } from '../models/user';
+import { authenticateUser } from '../utils/auth';
 
 export const userRoutes: Router = Router();
 
@@ -35,7 +36,10 @@ const userColumnsResponse: string = `
 userRoutes.get('/', async (req, res, next) => {
   try {
     const queryParams: string[] | number[] | null = [];
-    const query: string = `SELECT * FROM users`;
+    const query: string = `
+      SELECT ${userColumnsResponse}
+      FROM users
+    `;
     const response: QueryResult = await executeQery(query, queryParams);
     const usersList: User[] = response.rows;
     res.status(200).json(usersList);
@@ -51,9 +55,9 @@ userRoutes.get('/:userId', async (req: Request, res: Response, next: NextFunctio
     const userId: string = req.params.userId;
     const queryParams: string[] = [userId];
     const query: string = `
-      SELECT * 
+      SELECT ${userColumnsResponse}
       FROM users
-      WHERE user_id = $${queryParams.length}
+      WHERE user_id = $1
     `;
     const response: QueryResult = await executeQery(query, queryParams);
     const userSelected: User = response.rows[0];

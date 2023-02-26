@@ -1,7 +1,7 @@
 import { Router, Request, Response, NextFunction } from 'express';
-import jwt from 'jsonwebtoken';
-import bcrypt from 'bcrypt';
 import { QueryResult } from 'pg';
+import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
 import { executeQery } from '../db/query';
 import { authenticateApp } from '../utils/auth';
 
@@ -98,9 +98,7 @@ async function generateNewTokens(refreshToken: string) {
         token.refreshToken,
         process.env.REFRESH_TOKEN_SECRET || '',
         (err: any, data: any) => {
-          if (err) {
-            return null;
-          }
+          if (err) return null;
           const user: { userId: string } = { userId: token.userId };
           const newAccessToken: string = generateAccessToken(user);
           const newRefreshToken: string = generateRefreshToken(user);
