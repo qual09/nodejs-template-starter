@@ -13,17 +13,17 @@ authRoutes.post('/', authenticateApp, async (req: Request, res: Response, next: 
     const grantType: string = req.body.grant_type;
     if (!grantType) {
       // Unauthorized
-      res.status(401).json({ error: 'Unauthorized' });
+      res.status(401).json({ error: 'Unauthorized.' });
     } else if (grantType === 'password') {
       // Login
       const userId: string = req.body.username;
       const password: string = req.body.password;
       if (!userId || !password) {
-        res.status(401).json({ error: 'Unauthorized' });
+        res.status(401).json({ error: 'Unauthorized.' });
       } else {
         const userAuth: any = await login(userId, password);
         if (!userAuth) {
-          res.status(401).json({ error: 'The username or password is invalid' });
+          res.status(401).json({ error: 'The username or password is invalid.' });
         } else {
           res.status(200).json(userAuth);
         }
@@ -32,37 +32,39 @@ authRoutes.post('/', authenticateApp, async (req: Request, res: Response, next: 
       // Refresh Token
       const refreshToken: string = req.body.refresh_token;
       if (!refreshToken) {
-        res.status(401).json({ error: 'Unauthorized' });
+        res.status(401).json({ error: 'Unauthorized.' });
       } else {
         const newTokens: any = await generateNewTokens(refreshToken);
         if (newTokens) {
           res.status(201).json(newTokens);
         } else {
-          res.status(401).json({ error: 'Unauthorized' });
+          res.status(401).json({ error: 'Unauthorized.' });
         }
       }
     } else {
-      res.status(401).json({ error: 'Unauthorized' });
+      res.status(401).json({ error: 'Unauthorized.' });
     }
-  } catch (e: any) {
+  } catch (error: any) {
     res.sendStatus(500);
-    next(e);
+    next(error);
   }
 });
 
 // Logout and delete Tokens
+// TODO: verify, not working?
 authRoutes.delete('/logout', authenticateApp, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const refreshToken: string = req.body.refresh_token;
     if (!refreshToken) {
-      res.status(400).json({ error: 'Required fields are missing' });
+      res.status(400).json({ error: 'Required fields are missing.' });
     } else {
       await deleteRefreshToken(refreshToken);
-      res.sendStatus(204);
+      // res.sendStatus(204);
+      res.status(201).json({ message: 'Successfully logged out.' });
     }
-  } catch (e: any) {
+  } catch (error: any) {
     res.sendStatus(500);
-    next(e);
+    next(error);
   }
 });
 
@@ -83,8 +85,8 @@ async function login(userId: string, password: string) {
     const refreshToken: string = generateRefreshToken(user);
 
     return { access_token: accessToken, refresh_token: refreshToken };
-  } catch (e: any) {
-    throw e;
+  } catch (error: any) {
+    throw error;
   }
 }
 
@@ -111,18 +113,26 @@ async function generateNewTokens(refreshToken: string) {
       );
       return newTokens;
     }
-  } catch (e: any) {
-    throw e;
+  } catch (error: any) {
+    throw error;
   }
 }
 
 function generateAccessToken(user: { userId: string }) {
-  const refreshToken: string = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET || '', { expiresIn: '8h' });
+  const refreshToken: string = jwt.sign(
+    user,
+    process.env.ACCESS_TOKEN_SECRET || '',
+    { expiresIn: '8h' }
+  );
   return refreshToken;
 }
 
 function generateRefreshToken(user: { userId: string }) {
-  const refreshToken: string = jwt.sign(user, process.env.REFRESH_TOKEN_SECRET || '', { expiresIn: '24h' });
+  const refreshToken: string = jwt.sign(
+    user,
+    process.env.REFRESH_TOKEN_SECRET || '',
+    { expiresIn: '24h' }
+  );
   createRefreshToken(refreshToken, user.userId);
   return refreshToken;
 }
@@ -136,10 +146,13 @@ async function getUserPassword(userId: string) {
       WHERE user_id = $1
     `;
     const response: QueryResult = await executeQery(query, queryParams);
-    const userPassword: string | null = response.rows[0]['password'];
-    return userPassword;
-  } catch (e: any) {
-    throw e;
+    // User not found
+    if (!response || response.rows.length < 1) {
+      return null;
+    }
+    return response.rows[0].password;
+  } catch (error: any) {
+    throw error;
   }
 }
 
@@ -155,8 +168,8 @@ async function getRefreshToken(refreshToken: string) {
     `;
     const response: QueryResult = await executeQery(query, queryParams);
     return response.rowCount ? response.rows[0] : null;
-  } catch (e: any) {
-    throw e;
+  } catch (error: any) {
+    throw error;
   }
 }
 
@@ -174,8 +187,8 @@ async function createRefreshToken(refreshToken: string, userId: string) {
     const response: QueryResult = await executeQery(query, queryParams);
     const responseToken: string | null = response.rows[0];
     return responseToken;
-  } catch (e: any) {
-    throw e;
+  } catch (error: any) {
+    throw error;
   }
 }
 
@@ -193,8 +206,8 @@ async function deleteUserRefreshTokens(userId: string) {
     const response: QueryResult = await executeQery(query, queryParams);
     const result: any[] = response.rows;
     return result;
-  } catch (e: any) {
-    throw e;
+  } catch (error: any) {
+    throw error;
   }
 }
 
@@ -212,7 +225,7 @@ async function deleteRefreshToken(refreshToken: string) {
     const response: QueryResult = await executeQery(query, queryParams);
     const result: any[] = response.rows;
     return result;
-  } catch (e: any) {
-    throw e;
+  } catch (error: any) {
+    throw error;
   }
 }

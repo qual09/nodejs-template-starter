@@ -10,15 +10,16 @@ export function authenticateUser(req: Request, res: Response, next: NextFunction
   // Check for Bearer auth header
   if (!authHeader || authHeader.indexOf('Bearer ') === -1 || !token) {
     // Missing Authorization Header or Token
-    return res.status(401).json({ error: 'Unauthorized' });
+    return res.status(401).json({ error: 'Unauthorized.' });
   }
   // Verify Access Token
   jwt.verify(
     token,
     process.env.ACCESS_TOKEN_SECRET || '',
-    (err: any, user: any) => {
-      if (err) return res.status(401).json({ error: 'invalid_token' });
-      req.params.userId = user.userId; // TODO: verify
+    (err: any, data: any) => {
+      if (err) return res.status(401).json({ error: 'Invalid Token.' });
+      // Set currentUserId in a req parameter
+      req.params.currentUserId = data.userId; 
       next();
     }
   );
@@ -30,7 +31,7 @@ export function authenticateApp(req: Request, res: Response, next: NextFunction)
   // Check for Basic auth header
   if (!authHeader || authHeader.indexOf('Basic ') === -1 || !base64Credentials) {
     // Missing Authorization Header or Credentials
-    return res.status(401).json({ error: 'Unauthorized' });
+    return res.status(401).json({ error: 'Unauthorized.' });
   }
   // Verify Credentials
   const credentials: string = Buffer.from(
@@ -42,7 +43,7 @@ export function authenticateApp(req: Request, res: Response, next: NextFunction)
     oauthClientSecret !== process.env.OAUTH_CLIENT_SECRET
   ) {
     // Invalid Authentication Credentials
-    return res.status(401).json({ error: 'Unauthorized' });
+    return res.status(401).json({ error: 'Unauthorized.' });
   }
   next();
 }

@@ -33,7 +33,7 @@ const userColumnsResponse: string = `
 `;
 
 // Get Users List
-userRoutes.get('/', async (req, res, next) => {
+userRoutes.get('/', authenticateUser, async (req, res, next) => {
   try {
     const queryParams: string[] | number[] | null = [];
     const query: string = `
@@ -50,7 +50,7 @@ userRoutes.get('/', async (req, res, next) => {
 });
 
 // Get User by ID
-userRoutes.get('/:userId', async (req: Request, res: Response, next: NextFunction) => {
+userRoutes.get('/:userId', authenticateUser, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const userId: string = req.params.userId;
     const queryParams: string[] = [userId];
@@ -74,13 +74,14 @@ userRoutes.get('/:userId', async (req: Request, res: Response, next: NextFunctio
 });
 
 // Create New User
-userRoutes.post('/', async (req: Request, res: Response, next: NextFunction) => {
+userRoutes.post('/', authenticateUser, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const user: User = JSON.parse(JSON.stringify(req.body));
     if (!user || !user.password) {
       throw new Error('Failed to create a new User. Invalid data received.');
     }
-    user.createUser = req.params.userId;
+    user.createUser = req.params.currentUserId;
+    user.updateUser = req.params.currentUserId;
     user.password = await bcrypt.hash(user.password, 10);
     const queryParams: (string | number | boolean | null)[] = [
       user.userId,
@@ -112,7 +113,7 @@ userRoutes.post('/', async (req: Request, res: Response, next: NextFunction) => 
 });
 
 // Delete ALL Users
-userRoutes.delete('/', async (req: Request, res: Response, next: NextFunction) => {
+userRoutes.delete('/', authenticateUser, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const queryParams: string[] = [];
     const query: string = `
@@ -124,8 +125,8 @@ userRoutes.delete('/', async (req: Request, res: Response, next: NextFunction) =
       throw new Error('Failed to delete All Users.');
     }
     res.status(201).json({ message: 'All Users Deleted.' });
-  } catch (e: any) {
+  } catch (error: any) {
     res.status(500).json({ error: 'Internal server error.' });
-    next(e);
+    next(error);
   }
 });
