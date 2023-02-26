@@ -45,7 +45,7 @@ authRoutes.post('/', authenticateApp, async (req: Request, res: Response, next: 
       res.status(401).json({ error: 'Unauthorized. Error code: ICGT401' });
     }
   } catch (error: any) {
-    res.sendStatus(500);
+    res.status(500).json({ error: error.message || 'Internal server error.' });
     next(error);
   }
 });

@@ -44,7 +44,7 @@ userRoutes.get('/', authenticateUser, async (req, res, next) => {
     const usersList: User[] = queryResult.rows;
     res.status(200).json(usersList);
   } catch (error: any) {
-    res.status(500).json({ error: 'Internal server error.' });
+    res.status(500).json({ error: error.message || 'Internal server error.' });
     next(error);
   }
 });
@@ -68,7 +68,7 @@ userRoutes.get('/:userId', authenticateUser, async (req: Request, res: Response,
     const userSelected: User = queryResult.rows[0];
     res.status(200).json(userSelected);
   } catch (error: any) {
-    res.status(500).json({ error: 'Internal server error.' });
+    res.status(500).json({ error: error.message || 'Internal server error.' });
     next(error);
   }
 });
@@ -107,7 +107,7 @@ userRoutes.post('/', authenticateUser, async (req: Request, res: Response, next:
     const userCreated: User = queryResult.rows[0];
     res.status(201).json(userCreated);
   } catch (error: any) {
-    res.status(500).json({ error: 'Internal server error.' });
+    res.status(500).json({ error: error.message || 'Internal server error.' });
     next(error);
   }
 });
@@ -149,7 +149,7 @@ userRoutes.put('/', authenticateUser, async (req: Request, res: Response, next: 
     const userUpdated: User = queryResult.rows[0];
     res.status(201).json(userUpdated);
   } catch (error: any) {
-    res.status(500).json({ error: 'Internal server error.' });
+    res.status(500).json({ error: error.message || 'Internal server error.' });
     next(error);
   }
 });
@@ -159,16 +159,15 @@ userRoutes.delete('/:userId', authenticateUser, async (req: Request, res: Respon
   try {
     const userId: string = req.params.userId;
     const queryParams: string[] = [userId];
-		const query: string = `
+    const query: string = `
 			DELETE FROM users
 			WHERE user_id = $1
 			RETURNING ${userColumnsResponse}
 		`;
-		const queryResult: QueryResult = await executeQery(query, queryParams);
-    const response = queryResult.rowCount ? queryResult.rows[0] : null;
-    res.status(204).json(response);
+    const queryResult: QueryResult = await executeQery(query, queryParams);
+    res.sendStatus(204);
   } catch (error: any) {
-    res.status(500).json({ error: "Internal server error" });
+    res.status(500).json({ error: error.message || 'Internal server error.' });
     next(error);
   }
 });
@@ -187,7 +186,7 @@ userRoutes.delete('/', authenticateUser, async (req: Request, res: Response, nex
     }
     res.status(201).json({ message: 'Success. All Users Deleted.' });
   } catch (error: any) {
-    res.status(500).json({ error: 'Internal server error.' });
+    res.status(500).json({ error: error.message || 'Internal server error.' });
     next(error);
   }
 });
