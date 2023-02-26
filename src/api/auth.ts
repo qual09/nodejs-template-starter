@@ -2,7 +2,7 @@ import { Router, Request, Response, NextFunction } from 'express';
 import { QueryResult } from 'pg';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import { executeQery } from '../db/query';
+import { executeQery } from '../db/postgres';
 import { authenticateApp } from '../utils/auth';
 
 export const authRoutes = Router();

@@ -5,7 +5,7 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 // ### Init DB
-export const pool: Pool = new Pool({
+const pool: Pool = new Pool({
   user: process.env.DB_USER,
   host: process.env.DB_HOST,
   database: process.env.DB_DATABASE,
@@ -23,3 +23,17 @@ pool.on('error', (err, client) => {
 // ### Override date parser
 types.setTypeParser(1114, stringValue => stringValue); // time without timezone 
 types.setTypeParser(1082, stringValue => stringValue); // date 
+
+export async function executeQery(query: string, queryParams: (string | number | boolean | null)[]) {
+  const client = await pool.connect();
+  try {
+    const result = await client.query(query, queryParams);
+    return result;
+  } catch (error) {
+    throw error;
+  } finally {
+    // Make sure to release the client before any error handling,
+    // just in case the error handling itself throws an error.
+    client.release();
+  }
+}

@@ -1,7 +1,7 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { QueryResult } from 'pg';
 import bcrypt from 'bcrypt';
-import { executeQery } from '../db/query';
+import { executeQery } from '../db/postgres';
 import { User } from '../models/user';
 import { authenticateUser } from '../utils/auth';
 
