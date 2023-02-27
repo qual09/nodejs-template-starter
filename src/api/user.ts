@@ -14,7 +14,7 @@ const userColumns: string = `
   last_name,
   email,
   photo_url,
-  approver,
+  access,
   create_user,
   update_user
 `;
@@ -25,7 +25,7 @@ const userColumnsResponse: string = `
   last_name as "lastName",
   email,
   photo_url as "photoURL",
-  approver,
+  access,
   create_date as "createDate",
   create_user as "createUser",
   update_date as "updateDate",
@@ -90,7 +90,7 @@ userRoutes.post('/', authenticateUser, async (req: Request, res: Response, next:
       user.lastName,
       user.email,
       user.photoURL,
-      user.approver,
+      user.access,
       user.createUser,
       user.updateUser
     ];
@@ -126,7 +126,7 @@ userRoutes.put('/', authenticateUser, async (req: Request, res: Response, next: 
       user.lastName,
       user.email,
       user.photoURL,
-      user.approver,
+      user.access,
       user.updateUser
     ];
     const query: string = `
@@ -136,7 +136,7 @@ userRoutes.put('/', authenticateUser, async (req: Request, res: Response, next: 
         last_name = $3,
         email = $4,
         photo_url = $5,
-        approver = $6,
+        access = $6,
         update_user = $7,
         update_date = now()
       WHERE user_id = $1
