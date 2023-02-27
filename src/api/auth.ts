@@ -2,7 +2,7 @@ import { Router, Request, Response, NextFunction } from 'express';
 import { QueryResult } from 'pg';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import { executeQery } from '../db/postgres';
+import { executeQuery } from '../db/postgres';
 import { authenticateApp } from '../utils/auth';
 
 export const authRoutes = Router();
@@ -120,7 +120,7 @@ async function getUserPassword(userId: string) {
       FROM users
       WHERE user_id = $1
     `;
-    const queryResult: QueryResult = await executeQery(query, queryParams);
+    const queryResult: QueryResult = await executeQuery(query, queryParams);
     // User not found
     if (!queryResult || queryResult.rows.length !== 1) {
       return null;

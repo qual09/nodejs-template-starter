@@ -15,9 +15,9 @@ INSERT INTO
   users(user_id, password, first_name, email, access)
 VALUES
   (
-    'demo-approver',
+    'demo-admin',
     '$2b$10$WOpYDJX/Y9y7QA2PFfAFWeySgff5rPbi4RjNlazRNMcvzztYSn5i6',
-    'Demo Approver User',
-    'demo-approver-user@demo.com',
+    'Demo Admin User',
+    'demo-admin-user@demo.com',
     'admin'
   );

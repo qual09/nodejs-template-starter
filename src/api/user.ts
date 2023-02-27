@@ -1,7 +1,7 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { QueryResult } from 'pg';
 import bcrypt from 'bcrypt';
-import { executeQery } from '../db/postgres';
+import { executeQuery } from '../db/postgres';
 import { User } from '../models/user';
 import { authenticateUser } from '../utils/auth';
 
@@ -40,7 +40,7 @@ userRoutes.get('/', authenticateUser, async (req, res, next) => {
       SELECT ${userColumnsResponse}
       FROM users
     `;
-    const queryResult: QueryResult = await executeQery(query, queryParams);
+    const queryResult: QueryResult = await executeQuery(query, queryParams);
     const usersList: User[] = queryResult.rows;
     res.status(200).json(usersList);
   } catch (error: any) {
@@ -59,7 +59,7 @@ userRoutes.get('/:userId', authenticateUser, async (req: Request, res: Response,
       FROM users
       WHERE user_id = $1
     `;
-    const queryResult: QueryResult = await executeQery(query, queryParams);
+    const queryResult: QueryResult = await executeQuery(query, queryParams);
     if (!queryResult || queryResult.rows.length !== 1) {
       // throw new Error('Nof found!');
       res.status(404).json({ error: 'User not found.' });
@@ -100,7 +100,7 @@ userRoutes.post('/', authenticateUser, async (req: Request, res: Response, next:
       ON CONFLICT DO NOTHING
       RETURNING ${userColumnsResponse}
     `;
-    const queryResult: QueryResult = await executeQery(query, queryParams);
+    const queryResult: QueryResult = await executeQuery(query, queryParams);
     if (!queryResult || queryResult.rows.length !== 1) {
       throw new Error('Failed to create a new User. Database error.');
     }
@@ -142,7 +142,7 @@ userRoutes.put('/', authenticateUser, async (req: Request, res: Response, next: 
       WHERE user_id = $1
       RETURNING ${userColumnsResponse}
     `;
-    const queryResult: QueryResult = await executeQery(query, queryParams);
+    const queryResult: QueryResult = await executeQuery(query, queryParams);
     if (!queryResult || queryResult.rows.length !== 1) {
       throw new Error('Failed to update User. Database error.');
     }
@@ -164,7 +164,7 @@ userRoutes.delete('/:userId', authenticateUser, async (req: Request, res: Respon
 			WHERE user_id = $1
 			RETURNING ${userColumnsResponse}
 		`;
-    const queryResult: QueryResult = await executeQery(query, queryParams);
+    const queryResult: QueryResult = await executeQuery(query, queryParams);
     res.sendStatus(204);
   } catch (error: any) {
     res.status(500).json({ error: error.message || 'Internal server error.' });
@@ -179,7 +179,7 @@ userRoutes.delete('/', authenticateUser, async (req: Request, res: Response, nex
     const query: string = `
 			DELETE FROM users
     `;
-    const queryResult: QueryResult = await executeQery(query, queryParams);
+    const queryResult: QueryResult = await executeQuery(query, queryParams);
     const result: any[] = queryResult.rows;
     if (result.length !== 0) {
       throw new Error('Failed to delete All Users.');

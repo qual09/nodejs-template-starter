@@ -24,7 +24,7 @@ pool.on('error', (err, client) => {
 types.setTypeParser(1114, stringValue => stringValue); // time without timezone 
 types.setTypeParser(1082, stringValue => stringValue); // date 
 
-export async function executeQery(query: string, queryParams: (string | number | boolean | null)[]) {
+export async function executeQuery(query: string, queryParams: (string | number | boolean | null)[]) {
   const client = await pool.connect();
   try {
     const result = await client.query(query, queryParams);
