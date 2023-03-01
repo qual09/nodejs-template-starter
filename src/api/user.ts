@@ -35,6 +35,8 @@ const userColumnsResponse: string = `
 // Get Users List
 userRoutes.get('/', authenticateUser, async (req, res, next) => {
   try {
+    console.log(generateUID());
+
     const queryParams: string[] | number[] | null = [];
     const query: string = `
       SELECT ${userColumnsResponse}
@@ -77,8 +79,11 @@ userRoutes.get('/:userId', authenticateUser, async (req: Request, res: Response,
 userRoutes.post('/', authenticateUser, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const user: User = JSON.parse(JSON.stringify(req.body));
-    if (!user || !user.password) {
+    if (!user || !user.password || !user.firstName) {
       throw new Error('Failed to create a new User. Invalid data received.');
+    }
+    if (!user.userId) {
+      user.userId = generateUID();
     }
     user.createUser = req.params.currentUserId;
     user.updateUser = req.params.currentUserId;
@@ -190,3 +195,13 @@ userRoutes.delete('/', authenticateUser, async (req: Request, res: Response, nex
     next(error);
   }
 });
+
+function generateUID(): string {
+  // Generate the UID from two parts,
+  // to ensure the random number provide enough bits.
+  let firstPart: string = String((Math.random() * 46656) | 0);
+  let secondPart: string = String((Math.random() * 46656) | 0);
+  firstPart = ('000' + firstPart).slice(-3);
+  secondPart = ('000' + secondPart).slice(-3);
+  return firstPart + secondPart;
+}
