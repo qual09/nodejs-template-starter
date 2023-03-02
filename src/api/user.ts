@@ -82,8 +82,6 @@ userRoutes.get('/email/:email', authenticateUser, async (req: Request, res: Resp
   try {
     const email: string = req.params.email;
     const queryParams: string[] = [email];
-    console.log(email);
-
     const query: string = `
       SELECT ${userColumnsResponse}
       FROM users
