@@ -35,14 +35,14 @@ const userColumnsResponse: string = `
 // API: Get Users List
 userRoutes.get('/', authenticateUser, async (req, res, next) => {
   try {
-    const page: number = (Number(req.query.page) - 1) * Number(req.query.limit) || 0;
-    const limit: number = Number(req.query.limit) || 1000;
+    const startIndex: number = (Number(req.query.page) - 1) * Number(req.query.limit) || 0;
+    const endIndex: number = Number(req.query.limit) || 1000;
     const queryParams: string[] | number[] | null = [];
     const query: string = `
       SELECT ${userColumnsResponse}
       FROM users
-      OFFSET ${page}
-      LIMIT ${limit}
+      OFFSET ${startIndex}
+      LIMIT ${endIndex}
     `;
     const queryResult: QueryResult = await executeQuery(query, queryParams);
     const usersList: User[] = queryResult.rows;
