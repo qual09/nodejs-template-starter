@@ -1,9 +1,8 @@
 import { Router, Request, Response, NextFunction } from 'express';
-import { QueryResult } from 'pg';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import { executeQuery } from '../db/postgres';
 import { authenticateApp } from '../utils/auth';
+import { getUserPassword } from './user';
 
 export const authRoutes = Router();
 
@@ -110,24 +109,4 @@ function generateRefreshToken(newToken: { userId: string }) {
     { expiresIn: '8h' }
   );
   return refreshToken;
-}
-
-async function getUserPassword(userId: string) {
-  try {
-    const queryParams: string[] = [userId];
-    const query: string = `
-      SELECT password
-      FROM users
-      WHERE user_id = $1
-    `;
-    const queryResult: QueryResult = await executeQuery(query, queryParams);
-    // User not found
-    if (!queryResult || queryResult.rows.length !== 1) {
-      return null;
-    }
-    const userPassword: string = queryResult.rows[0].password;
-    return userPassword;
-  } catch (error: any) {
-    throw error;
-  }
 }

@@ -32,11 +32,9 @@ const userColumnsResponse: string = `
   update_user as "updateUser"
 `;
 
-// Get Users List
+// API: Get Users List
 userRoutes.get('/', authenticateUser, async (req, res, next) => {
   try {
-    console.log(generateUID());
-
     const queryParams: string[] | number[] | null = [];
     const query: string = `
       SELECT ${userColumnsResponse}
@@ -51,7 +49,7 @@ userRoutes.get('/', authenticateUser, async (req, res, next) => {
   }
 });
 
-// Get User by ID
+// API: Get User by ID
 userRoutes.get('/:userId', authenticateUser, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const userId: string = req.params.userId;
@@ -75,7 +73,7 @@ userRoutes.get('/:userId', authenticateUser, async (req: Request, res: Response,
   }
 });
 
-// Create New User
+// API: Create New User
 userRoutes.post('/', authenticateUser, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const user: User = JSON.parse(JSON.stringify(req.body));
@@ -117,11 +115,11 @@ userRoutes.post('/', authenticateUser, async (req: Request, res: Response, next:
   }
 });
 
-// Update User
+// API: Update User
 userRoutes.put('/', authenticateUser, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const user: User = JSON.parse(JSON.stringify(req.body));
-    if (!user) {
+    if (!user || !user.userId) {
       throw new Error('Failed to update User. Invalid data received.');
     }
     user.updateUser = req.params.currentUserId;
@@ -159,7 +157,48 @@ userRoutes.put('/', authenticateUser, async (req: Request, res: Response, next: 
   }
 });
 
-// Delete User
+// API: Update User Password
+userRoutes.put('/password', authenticateUser, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const user: User = JSON.parse(JSON.stringify(req.body));
+    if (!user || !user.userId || !user.password) {
+      throw new Error('Failed to update User. Invalid data received.');
+    }
+    // Validate Old Password
+    const hashPassword = await getUserPassword(user.userId);
+    if (!hashPassword) throw new Error('Failed to update User. Database error.');;
+    const validPassword = await bcrypt.compare(user.password, hashPassword);
+    if (!validPassword) throw new Error('Failed to update User. Invalid password.');
+    // Update new Password
+    user.password = await bcrypt.hash(user.newPassword, 10);
+    user.updateUser = req.params.currentUserId;
+    const queryParams: (string | number | boolean | null)[] = [
+      user.userId,
+      user.password,
+      user.updateUser
+    ];
+    const query: string = `
+      UPDATE users
+      SET
+        password = $2,
+        update_user = $3,
+        update_date = now()
+      WHERE user_id = $1
+      RETURNING ${userColumnsResponse}
+    `;
+    const queryResult: QueryResult = await executeQuery(query, queryParams);
+    if (!queryResult || queryResult.rows.length !== 1) {
+      throw new Error('Failed to update User. Database error.');
+    }
+    const userUpdated: User = queryResult.rows[0];
+    res.status(201).json(userUpdated);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message || 'Internal server error.' });
+    next(error);
+  }
+});
+
+// API: Delete User
 userRoutes.delete('/:userId', authenticateUser, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const userId: string = req.params.userId;
@@ -177,7 +216,7 @@ userRoutes.delete('/:userId', authenticateUser, async (req: Request, res: Respon
   }
 });
 
-// Delete ALL Users
+// API: Delete ALL Users
 userRoutes.delete('/', authenticateUser, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const queryParams: string[] = [];
@@ -204,4 +243,24 @@ function generateUID(): string {
   firstPart = ('000' + firstPart).slice(-3);
   secondPart = ('000' + secondPart).slice(-3);
   return firstPart + secondPart;
+}
+
+export async function getUserPassword(userId: string) {
+  try {
+    const queryParams: string[] = [userId];
+    const query: string = `
+      SELECT password
+      FROM users
+      WHERE user_id = $1
+    `;
+    const queryResult: QueryResult = await executeQuery(query, queryParams);
+    // User not found
+    if (!queryResult || queryResult.rows.length !== 1) {
+      return null;
+    }
+    const userPassword: string = queryResult.rows[0].password;
+    return userPassword;
+  } catch (error: any) {
+    throw error;
+  }
 }
