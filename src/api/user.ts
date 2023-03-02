@@ -66,12 +66,37 @@ userRoutes.get('/:userId', authenticateUser, async (req: Request, res: Response,
     `;
     const queryResult: QueryResult = await executeQuery(query, queryParams);
     if (!queryResult || queryResult.rows.length !== 1) {
-      // throw new Error('Nof found!');
       res.status(404).json({ error: 'User not found.' });
       return;
     }
     const userSelected: User = queryResult.rows[0];
     res.status(200).json(userSelected);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message || 'Internal server error.' });
+    next(error);
+  }
+});
+
+// API: Search Users by Email
+userRoutes.get('/email/:email', authenticateUser, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const email: string = req.params.email;
+    const queryParams: string[] = [email];
+    console.log(email);
+
+    const query: string = `
+      SELECT ${userColumnsResponse}
+      FROM users
+      WHERE email like '%' || $1 || '%'
+      LIMIT 10
+    `;
+    const queryResult: QueryResult = await executeQuery(query, queryParams);
+    if (!queryResult || queryResult.rows.length < 1) {
+      res.status(404).json({ error: 'User not found.' });
+      return;
+    }
+    const usersSelected: User[] = queryResult.rows;
+    res.status(200).json(usersSelected);
   } catch (error: any) {
     res.status(500).json({ error: error.message || 'Internal server error.' });
     next(error);
