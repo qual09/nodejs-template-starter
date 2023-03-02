@@ -13,8 +13,8 @@ DB_HOST=localhost
 DB_PORT=5432  
 DB_DATABASE=postgres  
   
-OAUTH_CLIENT=o-client  
-OAUTH_SECRET=o-secret  
+OAUTH_CLIENT_ID=o-client  
+OAUTH_CLIENT_SECRET=o-secret  
 REFRESH_TOKEN_SECRET=xxxxxx  
 ACCESS_TOKEN_SECRET=xxxxxx  
   

@@ -6,7 +6,8 @@ const cookieParser = require('cookie-parser');
 const dotenv = require('dotenv');
 
 // ### Local Modules
-const userRoutes = require('./api/user');
+const userRoutes = require('./api/user').userRoutes;
+const authRoutes = require('./api/auth');
 
 // ### Environment Viariables
 dotenv.config();
@@ -29,9 +30,11 @@ app.use('/server', express.static(path.join(__dirname, viewsFolder)));
 
 // ### REST API
 app.get(`${apiUrl}/`, (req, res) => {
-  res.json({ info: 'Nodejs REST API' });
+  const currentDate = new Date().toISOString();
+  res.json({ info: 'Nodejs REST API', timestamp: currentDate });
 });
 app.use(`${apiUrl}/user`, userRoutes);
+app.use(`${apiUrl}/auth`, authRoutes);
 
 // ### Start Server
 const HOSTNAME = process.env.HOSTNAME || 'localhost';

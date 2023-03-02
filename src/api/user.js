@@ -1,5 +1,7 @@
-const router = require('express').Router();
+const userRoutes = require('express').Router();
+const bcrypt = require('bcrypt');
 const executeQuery = require('../db/postgres').executeQuery;
+const authenticateUser = require('../utils/auth').authenticateUser;
 
 const userColumns = `
   user_id,
@@ -26,11 +28,18 @@ const userColumnsResponse = `
   update_user as "updateUser"
 `;
 
-// Get Users List
-router.get('/', async (req, res, next) => {
+// API: Get Users List
+userRoutes.get('/', authenticateUser, async (req, res, next) => {
   try {
+    const startIndex = (Number(req.query.page) - 1) * Number(req.query.limit) || 0;
+    const endIndex = Number(req.query.limit) || 1000;
     const queryParams = [];
-    const query = `SELECT ${userColumnsResponse} FROM users`;
+    const query = `
+      SELECT ${userColumnsResponse}
+      FROM users
+      OFFSET ${startIndex}
+      LIMIT ${endIndex}
+    `;
     const queryResult = await executeQuery(query, queryParams);
     const usersList = queryResult.rows;
     res.status(200).json(usersList);
@@ -40,8 +49,8 @@ router.get('/', async (req, res, next) => {
   }
 });
 
-// Get User by ID
-router.get('/:userId', async (req, res, next) => {
+// API: Get User by ID
+userRoutes.get('/:userId', authenticateUser, async (req, res, next) => {
   try {
     const userId = req.params.userId;
     const queryParams = [userId];
@@ -49,6 +58,7 @@ router.get('/:userId', async (req, res, next) => {
       SELECT ${userColumnsResponse}
       FROM users
       WHERE user_id = $1
+      LIMIT 10
     `;
     const queryResult = await executeQuery(query, queryParams);
     if (!queryResult || queryResult.rows.length !== 1) {
@@ -64,5 +74,38 @@ router.get('/:userId', async (req, res, next) => {
   }
 });
 
+function generateUID() {
+  // Generate the UID from two parts,
+  // to ensure the random number provide enough bits.
+  let firstPart = String((Math.random() * 46656) | 0);
+  let secondPart = String((Math.random() * 46656) | 0);
+  firstPart = ('000' + firstPart).slice(-3);
+  secondPart = ('000' + secondPart).slice(-3);
+  return firstPart + secondPart;
+}
+
+async function getUserPassword(userId) {
+  try {
+    const queryParams = [userId];
+    const query = `
+      SELECT password
+      FROM users
+      WHERE user_id = $1
+    `;
+    const queryResult = await executeQuery(query, queryParams);
+    // User not found
+    if (!queryResult || queryResult.rows.length !== 1) {
+      return null;
+    }
+    const userPassword = queryResult.rows[0].password;
+    return userPassword;
+  } catch (error) {
+    throw error;
+  }
+}
+
 // ### Module exports
-module.exports = router;
+module.exports = {
+  userRoutes: userRoutes,
+  getUserPassword: getUserPassword
+};
