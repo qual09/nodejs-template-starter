@@ -106,7 +106,7 @@ userRoutes.post('/', authenticateUser, async (req: Request, res: Response, next:
   try {
     const user: User = JSON.parse(JSON.stringify(req.body));
     if (!user || !user.password || !user.firstName) {
-      throw new Error('Failed to create a new User. Invalid data received.');
+      throw new Error('Failed to create a new User. Error code: UIDRC500');
     }
     if (!user.userId) {
       user.userId = generateUID();
@@ -133,7 +133,7 @@ userRoutes.post('/', authenticateUser, async (req: Request, res: Response, next:
     `;
     const queryResult: QueryResult = await executeQuery(query, queryParams);
     if (!queryResult || queryResult.rows.length !== 1) {
-      throw new Error('Failed to create a new User. Database error.');
+      throw new Error('Failed to create a new User. Error code: UDBRI500');
     }
     const userCreated: User = queryResult.rows[0];
     res.status(201).json(userCreated);
@@ -148,7 +148,7 @@ userRoutes.put('/', authenticateUser, async (req: Request, res: Response, next: 
   try {
     const user: User = JSON.parse(JSON.stringify(req.body));
     if (!user || !user.userId) {
-      throw new Error('Failed to update User. Invalid data received.');
+      throw new Error('Failed to update User. Error code: UIDRU500');
     }
     user.updateUser = req.params.currentUserId;
     const queryParams: (string | number | boolean | null)[] = [
@@ -175,7 +175,7 @@ userRoutes.put('/', authenticateUser, async (req: Request, res: Response, next: 
     `;
     const queryResult: QueryResult = await executeQuery(query, queryParams);
     if (!queryResult || queryResult.rows.length !== 1) {
-      throw new Error('Failed to update User. Database error.');
+      throw new Error('Failed to update User. Error code: UDBR500');
     }
     const userUpdated: User = queryResult.rows[0];
     res.status(201).json(userUpdated);
@@ -190,13 +190,13 @@ userRoutes.put('/password', authenticateUser, async (req: Request, res: Response
   try {
     const user: User = JSON.parse(JSON.stringify(req.body));
     if (!user || !user.userId || !user.password) {
-      throw new Error('Failed to update User. Invalid data received.');
+      throw new Error('Failed to update User. Error code: UIDRP500');
     }
     // Validate Old Password
     const hashPassword = await getUserPassword(user.userId);
-    if (!hashPassword) throw new Error('Failed to update User. Database error.');;
+    if (!hashPassword) throw new Error('Failed to update User. Error code: UHP500');
     const validPassword = await bcrypt.compare(user.password, hashPassword);
-    if (!validPassword) throw new Error('Failed to update User. Invalid password.');
+    if (!validPassword) throw new Error('Failed to update User. Error code: UVP500');
     // Update new Password
     user.password = await bcrypt.hash(user.newPassword, 10);
     user.updateUser = req.params.currentUserId;
@@ -216,7 +216,7 @@ userRoutes.put('/password', authenticateUser, async (req: Request, res: Response
     `;
     const queryResult: QueryResult = await executeQuery(query, queryParams);
     if (!queryResult || queryResult.rows.length !== 1) {
-      throw new Error('Failed to update User. Database error.');
+      throw new Error('Failed to update User. Error code: UDBR500');
     }
     const userUpdated: User = queryResult.rows[0];
     res.status(201).json(userUpdated);
@@ -254,7 +254,7 @@ userRoutes.delete('/', authenticateUser, async (req: Request, res: Response, nex
     const queryResult: QueryResult = await executeQuery(query, queryParams);
     const result: any[] = queryResult.rows;
     if (result.length !== 0) {
-      throw new Error('Failed to delete All Users.');
+      throw new Error('Failed to delete All Users. Error code: UDBRD500');
     }
     res.status(201).json({ message: 'Success. All Users Deleted.' });
   } catch (error: any) {
