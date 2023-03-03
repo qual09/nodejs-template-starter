@@ -32,7 +32,7 @@ const userColumnsResponse: string = `
   update_user as "updateUser"
 `;
 
-// API: Get Users List
+// ### API: Get Users List
 userRoutes.get('/', authenticateUser, async (req, res, next) => {
   try {
     const startIndex: number = (Number(req.query.page) - 1) * Number(req.query.limit) || 0;
@@ -53,7 +53,7 @@ userRoutes.get('/', authenticateUser, async (req, res, next) => {
   }
 });
 
-// API: Get User by ID
+// ### API: Get User by ID
 userRoutes.get('/:userId', authenticateUser, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const userId: string = req.params.userId;
@@ -77,7 +77,7 @@ userRoutes.get('/:userId', authenticateUser, async (req: Request, res: Response,
   }
 });
 
-// API: Search Users by Email
+// ### API: Search Users by Email
 userRoutes.get('/email/:email', authenticateUser, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const email: string = req.params.email;
@@ -101,7 +101,7 @@ userRoutes.get('/email/:email', authenticateUser, async (req: Request, res: Resp
   }
 });
 
-// API: Create New User
+// ### API: Create New User
 userRoutes.post('/', authenticateUser, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const user: User = JSON.parse(JSON.stringify(req.body));
@@ -143,7 +143,7 @@ userRoutes.post('/', authenticateUser, async (req: Request, res: Response, next:
   }
 });
 
-// API: Update User
+// ### API: Update User
 userRoutes.put('/', authenticateUser, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const user: User = JSON.parse(JSON.stringify(req.body));
@@ -185,7 +185,7 @@ userRoutes.put('/', authenticateUser, async (req: Request, res: Response, next: 
   }
 });
 
-// API: Update User Password
+// ### API: Update User Password
 userRoutes.put('/password', authenticateUser, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const user: User = JSON.parse(JSON.stringify(req.body));
@@ -226,7 +226,7 @@ userRoutes.put('/password', authenticateUser, async (req: Request, res: Response
   }
 });
 
-// API: Delete User
+// ### API: Delete User
 userRoutes.delete('/:userId', authenticateUser, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const userId: string = req.params.userId;
@@ -244,7 +244,7 @@ userRoutes.delete('/:userId', authenticateUser, async (req: Request, res: Respon
   }
 });
 
-// API: Delete ALL Users
+// ### API: Delete ALL Users
 userRoutes.delete('/', authenticateUser, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const queryParams: string[] = [];

@@ -6,7 +6,7 @@ import { getUserPassword } from './user';
 
 export const authRoutes = Router();
 
-// Login / Refresh Access: Grant new token or refresh current
+// ### API: Login / Refresh Access: Grant new token or refresh current
 authRoutes.post('/', authenticateApp, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const grantType: string = req.body.grant_type;
@@ -49,7 +49,7 @@ authRoutes.post('/', authenticateApp, async (req: Request, res: Response, next: 
   }
 });
 
-// Logout
+// ### API: Logout
 authRoutes.delete('/logout', authenticateApp, async (req: Request, res: Response) => {
   res.sendStatus(204);
 });
