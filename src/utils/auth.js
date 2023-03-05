@@ -39,7 +39,8 @@ function authenticateUser(req, res, next) {
     token,
     process.env.ACCESS_TOKEN_SECRET || '',
     (err, data) => {
-      if (err) return res.status(401).json({ error: 'Unauthorized. Error code: ICUT401' });
+      // Below message must match on front end App's http interceptor
+      if (err) return res.status(401).json({ error: 'invalid_token' });
       // Set currentUserId in a request parameter
       req.params.currentUserId = data.userId;
       next();
