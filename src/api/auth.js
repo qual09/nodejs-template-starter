@@ -13,7 +13,7 @@ const ERRORS = {
   INTERNAL_SERVER_ERROR: 'Internal server error',
 };
 
-// Login / Refresh Access: Grant new token or refresh current
+// ### API: Login / Refresh Access: Grant new token or refresh current
 authRoutes.post('/', authenticateApp, async (req, res, next) => {
   try {
     const grantType = req.body.grant_type;
@@ -56,7 +56,7 @@ authRoutes.post('/', authenticateApp, async (req, res, next) => {
   }
 });
 
-// Logout
+// ### API: Logout
 authRoutes.delete('/logout', authenticateApp, async (req, res) => {
   res.sendStatus(204);
 });
@@ -76,30 +76,26 @@ async function login(userId, password) {
 }
 
 async function generateNewTokens(refreshToken) {
-  try {
-    const newTokens = jwt.verify(
-      refreshToken,
-      process.env.REFRESH_TOKEN_SECRET || '',
-      (err, data) => {
-        if (err) return null;
-        // Generate new Tokens
-        const newAccessToken = generateAccessToken(data.userId);
-        const newRefreshToken = generateRefreshToken(data.userId);
-        return { access_token: newAccessToken, refresh_token: newRefreshToken };
-      }
-    );
-    return newTokens;
-  } catch (error) {
-    throw error;
-  }
+  const newTokens = jwt.verify(
+    refreshToken,
+    process.env.REFRESH_TOKEN_SECRET || '',
+    (err, data) => {
+      if (err) return null;
+      // Generate new Tokens
+      const newAccessToken = generateAccessToken(data.userId);
+      const newRefreshToken = generateRefreshToken(data.userId);
+      return { access_token: newAccessToken, refresh_token: newRefreshToken };
+    }
+  );
+  return newTokens;
 }
 
 function generateAccessToken(userId) {
-  return jwt.sign({ userId }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '30m' });
+  return jwt.sign({ userId }, process.env.ACCESS_TOKEN_SECRET || '', { expiresIn: '30m' });
 }
 
 function generateRefreshToken(userId) {
-  return jwt.sign({ userId }, process.env.REFRESH_TOKEN_SECRET, { expiresIn: '8h' });
+  return jwt.sign({ userId }, process.env.REFRESH_TOKEN_SECRET || '', { expiresIn: '8h' });
 }
 
 // ### Module exports
