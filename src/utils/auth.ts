@@ -41,6 +41,7 @@ export function authenticateUser(req: Request, res: Response, next: NextFunction
     process.env.ACCESS_TOKEN_SECRET || '',
     (err: any, data: any) => {
       // Below message must match on front end App's http interceptor
+      // for requesting a new token functionality
       if (err) return res.status(401).json({ error: 'invalid_token' });
       // Set currentUserId in a request parameter
       req.params.currentUserId = data.userId;
