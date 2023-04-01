@@ -64,40 +64,32 @@ authRoutes.delete('/logout', authenticateApp, async (req: Request, res: Response
 });
 
 async function login(userId: string, password: string) {
-  try {
-    // Validate Password
-    const userPassword = await getUserPassword(userId);
-    if (!userPassword) return null;
-    const match = await bcrypt.compare(password, userPassword);
-    if (match) {
-      // Generate new Tokens
-      const accessToken = generateAccessToken(userId);
-      const refreshToken = generateRefreshToken(userId);
-      return { access_token: accessToken, refresh_token: refreshToken };
-    }
-    return null;
-  } catch (error: any) {
-    throw error;
+  // Validate Password
+  const userPassword = await getUserPassword(userId);
+  if (!userPassword) return null;
+  const match = await bcrypt.compare(password, userPassword);
+  if (match) {
+    // Generate new Tokens
+    const accessToken = generateAccessToken(userId);
+    const refreshToken = generateRefreshToken(userId);
+    return { access_token: accessToken, refresh_token: refreshToken };
   }
+  return null;
 }
 
 async function generateNewTokens(refreshToken: string) {
-  try {
-    const newTokens: any = jwt.verify(
-      refreshToken,
-      process.env.REFRESH_TOKEN_SECRET || '',
-      (err: any, data: any) => {
-        if (err) return null;
-        // Generate new Tokens
-        const newAccessToken: string = generateAccessToken(data.userId);
-        const newRefreshToken: string = generateRefreshToken(data.userId);
-        return { access_token: newAccessToken, refresh_token: newRefreshToken };
-      }
-    );
-    return newTokens;
-  } catch (error: any) {
-    throw error;
-  }
+  const newTokens: any = jwt.verify(
+    refreshToken,
+    process.env.REFRESH_TOKEN_SECRET || '',
+    (err: any, data: any) => {
+      if (err) return null;
+      // Generate new Tokens
+      const newAccessToken: string = generateAccessToken(data.userId);
+      const newRefreshToken: string = generateRefreshToken(data.userId);
+      return { access_token: newAccessToken, refresh_token: newRefreshToken };
+    }
+  );
+  return newTokens;
 }
 
 function generateAccessToken(userId: string) {
