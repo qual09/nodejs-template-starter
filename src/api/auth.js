@@ -4,23 +4,32 @@ const jwt = require('jsonwebtoken');
 const authenticateApp = require('../utils/auth').authenticateApp;
 const getUserPassword = require('./user').getUserPassword;
 
+const ERRORS = {
+  UNAUTHORIZED: 'Unauthorized',
+  MISSING_CREDENTIALS: 'Username or password is missing',
+  INVALID_CREDENTIALS: 'Invalid username or password',
+  MISSING_REFRESH_TOKEN: 'Refresh token is missing',
+  INVALID_REFRESH_TOKEN: 'Invalid refresh token',
+  INTERNAL_SERVER_ERROR: 'Internal server error',
+};
+
 // Login / Refresh Access: Grant new token or refresh current
 authRoutes.post('/', authenticateApp, async (req, res, next) => {
   try {
     const grantType = req.body.grant_type;
     if (!grantType) {
       // Unauthorized
-      res.status(401).json({ error: 'Unauthorized. Error code: MCGT401' });
+      res.status(401).json({ error: ERRORS.UNAUTHORIZED });
     } else if (grantType === 'password') {
       // Login
       const userId = req.body.username;
       const password = req.body.password;
       if (!userId || !password) {
-        res.status(401).json({ error: 'Unauthorized. Error code: MCUP401' });
+        res.status(401).json({ error: ERRORS.UNAUTHORIZE.MISSING_CREDENTIALS });
       } else {
         const userAuth = await login(userId, password);
         if (!userAuth) {
-          res.status(401).json({ error: 'Unauthorized. Error code: ICUP401' });
+          res.status(401).json({ error: ERRORS.INVALID_CREDENTIALS });
         } else {
           res.status(200).json(userAuth);
         }
@@ -29,20 +38,20 @@ authRoutes.post('/', authenticateApp, async (req, res, next) => {
       // Refresh Token
       const refreshToken = req.body.refresh_token;
       if (!refreshToken) {
-        res.status(401).json({ error: 'Unauthorized. Error code: MCRT401' });
+        res.status(401).json({ error: ERRORS.MISSING_REFRESH_TOKEN });
       } else {
         const newTokens = await generateNewTokens(refreshToken);
         if (newTokens) {
           res.status(201).json(newTokens);
         } else {
-          res.status(401).json({ error: 'Unauthorized. Error code: ISENT401' });
+          res.status(401).json({ error: ERRORS.INVALID_REFRESH_TOKEN });
         }
       }
     } else {
-      res.status(401).json({ error: 'Unauthorized. Error code: ICGT401' });
+      res.status(401).json({ error: ERRORS.UNAUTHORIZED });
     }
   } catch (error) {
-    res.status(500).json({ error: error.message || 'Internal server error.' });
+    res.status(500).json({ error: error.message || ERRORS.INTERNAL_SERVER_ERROR });
     next(error);
   }
 });
@@ -53,22 +62,17 @@ authRoutes.delete('/logout', authenticateApp, async (req, res) => {
 });
 
 async function login(userId, password) {
-  try {
-    // Validate Password
-    const hashPassword = await getUserPassword(userId);
-    if (!hashPassword) return null;
-    const validPassword = await bcrypt.compare(password, hashPassword);
-    if (!validPassword) return null;
-
+  // Validate Password
+  const userPassword = await getUserPassword(userId);
+  if (!userPassword) return null;
+  const match = await bcrypt.compare(password, userPassword);
+  if (match) {
     // Generate new Tokens
-    const newToken = { userId: userId };
-    const accessToken = generateAccessToken(newToken);
-    const refreshToken = generateRefreshToken(newToken);
-
+    const accessToken = generateAccessToken(userId);
+    const refreshToken = generateRefreshToken(userId);
     return { access_token: accessToken, refresh_token: refreshToken };
-  } catch (error) {
-    throw error;
   }
+  return null;
 }
 
 async function generateNewTokens(refreshToken) {
@@ -79,9 +83,8 @@ async function generateNewTokens(refreshToken) {
       (err, data) => {
         if (err) return null;
         // Generate new Tokens
-        const newToken = { userId: data.userId };
-        const newAccessToken = generateAccessToken(newToken);
-        const newRefreshToken = generateRefreshToken(newToken);
+        const newAccessToken = generateAccessToken(data.userId);
+        const newRefreshToken = generateRefreshToken(data.userId);
         return { access_token: newAccessToken, refresh_token: newRefreshToken };
       }
     );
@@ -91,22 +94,12 @@ async function generateNewTokens(refreshToken) {
   }
 }
 
-function generateAccessToken(newToken) {
-  const refreshToken = jwt.sign(
-    newToken,
-    process.env.ACCESS_TOKEN_SECRET || '',
-    { expiresIn: '1h' }
-  );
-  return refreshToken;
+function generateAccessToken(userId) {
+  return jwt.sign({ userId }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '30m' });
 }
 
-function generateRefreshToken(newToken) {
-  const refreshToken = jwt.sign(
-    newToken,
-    process.env.REFRESH_TOKEN_SECRET || '',
-    { expiresIn: '8h' }
-  );
-  return refreshToken;
+function generateRefreshToken(userId) {
+  return jwt.sign({ userId }, process.env.REFRESH_TOKEN_SECRET, { expiresIn: '8h' });
 }
 
 // ### Module exports
