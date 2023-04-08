@@ -189,14 +189,17 @@ userRoutes.put('/', authenticateUser, async (req: Request, res: Response, next: 
 userRoutes.put('/password', authenticateUser, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const user: User = JSON.parse(JSON.stringify(req.body));
-    if (!user || !user.userId || !user.password) {
+    const currentUserAccess: string | null = await getUserAccess(req.params.currentUserId);
+    if (!user || !user.userId || (!user.password && currentUserAccess !== 'admin')) {
       throw new Error('Failed to update User. Error code: UIDRP500');
     }
-    // Validate Old Password
-    const hashPassword = await getUserPassword(user.userId);
-    if (!hashPassword) throw new Error('Failed to update User. Error code: UHP500');
-    const validPassword = await bcrypt.compare(user.password, hashPassword);
-    if (!validPassword) throw new Error('Failed to update User. Error code: UVP500');
+    if (currentUserAccess !== 'admin' || user.password) {
+      // Validate Old Password
+      const hashPassword = await getUserPassword(user.userId);
+      if (!hashPassword) throw new Error('Failed to update User. Error code: UHP500');
+      const validPassword = await bcrypt.compare(user.password, hashPassword);
+      if (!validPassword) throw new Error('Failed to update User. Error code: UVP500');
+    }
     // Update new Password
     user.password = await bcrypt.hash(user.newPassword, 10);
     user.updateUser = req.params.currentUserId;
@@ -274,21 +277,33 @@ function generateUID(): string {
 }
 
 export async function getUserPassword(userId: string) {
-  try {
-    const queryParams: string[] = [userId];
-    const query: string = `
+  const queryParams: string[] = [userId];
+  const query: string = `
       SELECT password
       FROM users
       WHERE user_id = $1
     `;
-    const queryResult: QueryResult = await executeQuery(query, queryParams);
-    // User not found
-    if (!queryResult || queryResult.rows.length !== 1) {
-      return null;
-    }
-    const userPassword: string = queryResult.rows[0].password;
-    return userPassword;
-  } catch (error: any) {
-    throw error;
+  const queryResult: QueryResult = await executeQuery(query, queryParams);
+  // User not found
+  if (!queryResult || queryResult.rows.length !== 1) {
+    return null;
   }
+  const userPassword: string = queryResult.rows[0].password;
+  return userPassword;
+}
+
+export async function getUserAccess(userId: string) {
+  const queryParams: string[] = [userId];
+  const query: string = `
+    SELECT access
+    FROM users
+    WHERE user_id = $1
+  `;
+  const queryResult: QueryResult = await executeQuery(query, queryParams);
+  // User not found
+  if (!queryResult || queryResult.rows.length !== 1) {
+    return null;
+  }
+  const userAccess: string = queryResult.rows[0].access;
+  return userAccess;
 }

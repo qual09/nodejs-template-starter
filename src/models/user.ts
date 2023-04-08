@@ -2,11 +2,11 @@ import { GlobalModel } from './global';
 
 export interface User extends GlobalModel {
   userId: string;
-  newPassword: string;
-  password: string;
   firstName: string;
   lastName: string;
   email: string;
   photoURL: string;
-  access: string;
+  access: 'admin' | 'user' | 'manager';
+  password: string;
+  newPassword: string;
 }
