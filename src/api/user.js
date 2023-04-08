@@ -185,14 +185,17 @@ userRoutes.put('/', authenticateUser, async (req, res, next) => {
 userRoutes.put('/password', authenticateUser, async (req, res, next) => {
   try {
     const user = JSON.parse(JSON.stringify(req.body));
-    if (!user || !user.userId || !user.password) {
+    const currentUserAccess = await getUserAccess(req.params.currentUserId);
+    if (!user || !user.userId || (!user.password && currentUserAccess !== 'admin')) {
       throw new Error('Failed to update User. Invalid data received.');
     }
-    // Validate Old Password
-    const hashPassword = await getUserPassword(user.userId);
-    if (!hashPassword) throw new Error('Failed to update User. Database error.');;
-    const validPassword = await bcrypt.compare(user.password, hashPassword);
-    if (!validPassword) throw new Error('Failed to update User. Invalid password.');
+    if (currentUserAccess !== 'admin' || user.password) {
+      // Validate Old Password
+      const hashPassword = await getUserPassword(user.userId);
+      if (!hashPassword) throw new Error('Failed to update User. Database error.');
+      const validPassword = await bcrypt.compare(user.password, hashPassword);
+      if (!validPassword) throw new Error('Failed to update User. Invalid password.');
+    }
     // Update new Password
     user.password = await bcrypt.hash(user.newPassword, 10);
     user.updateUser = req.params.currentUserId;
@@ -270,23 +273,35 @@ function generateUID() {
 }
 
 async function getUserPassword(userId) {
-  try {
-    const queryParams = [userId];
-    const query = `
-      SELECT password
-      FROM users
-      WHERE user_id = $1
-    `;
-    const queryResult = await executeQuery(query, queryParams);
-    // User not found
-    if (!queryResult || queryResult.rows.length !== 1) {
-      return null;
-    }
-    const userPassword = queryResult.rows[0].password;
-    return userPassword;
-  } catch (error) {
-    throw error;
+  const queryParams = [userId];
+  const query = `
+    SELECT password
+    FROM users
+    WHERE user_id = $1
+  `;
+  const queryResult = await executeQuery(query, queryParams);
+  // User not found
+  if (!queryResult || queryResult.rows.length !== 1) {
+    return null;
   }
+  const userPassword = queryResult.rows[0].password;
+  return userPassword;
+}
+
+async function getUserAccess(userId) {
+  const queryParams = [userId];
+  const query = `
+    SELECT access
+    FROM users
+    WHERE user_id = $1
+  `;
+  const queryResult = await executeQuery(query, queryParams);
+  // User not found
+  if (!queryResult || queryResult.rows.length !== 1) {
+    return null;
+  }
+  const userAccess = queryResult.rows[0].access;
+  return userAccess;
 }
 
 // ### Module exports
