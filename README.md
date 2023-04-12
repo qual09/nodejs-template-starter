@@ -8,11 +8,12 @@ HOSTNAME=localhost
 PORT=3000
 NODE_VERSION=18.14.2
 
-DB_USER=postgres
-DB_PASSWORD=postgres
 DB_HOST=localhost
 DB_PORT=5432
 DB_DATABASE=postgres
+DB_USER=postgres
+DB_PASSWORD=postgres
+DB_SCHEMA=public
 
 OAUTH_CLIENT_ID=oauth-client-id
 OAUTH_CLIENT_SECRET=oauth-client-secret

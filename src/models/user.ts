@@ -6,6 +6,7 @@ export interface User extends GlobalModel {
   lastName: string;
   email: string;
   photoURL: string;
+  loginDate: string;
   access: 'admin' | 'user' | 'manager';
   password: string;
   newPassword: string;

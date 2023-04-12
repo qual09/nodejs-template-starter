@@ -1,30 +1,20 @@
 import { Router, Request, Response, NextFunction } from 'express';
-import { QueryResult } from 'pg';
-import bcrypt from 'bcrypt';
+import { QueryResult, QueryResultRow } from 'pg';
 import { executeQuery } from '../db/postgres';
-import { User } from '../models/user';
 import { authenticateUser } from '../utils/auth';
+import { User } from '../models/user';
+import bcrypt from 'bcrypt';
 
 export const userRoutes: Router = Router();
 
-const userColumns: string = `
-  user_id,
-  password,
-  first_name,
-  last_name,
-  email,
-  photo_url,
-  access,
-  create_user,
-  update_user
-`;
-
+const dbSchema: string = process.env.DB_SCHEMA || 'public';
 const userColumnsResponse: string = `
   user_id as "userId",
   first_name as "firstName",
   last_name as "lastName",
   email,
   photo_url as "photoURL",
+  login_date as "loginDate",
   access,
   create_date as "createDate",
   create_user as "createUser",
@@ -33,14 +23,14 @@ const userColumnsResponse: string = `
 `;
 
 // ### API: Get Users List
-userRoutes.get('/', authenticateUser, async (req, res, next) => {
+userRoutes.get('/', authenticateUser, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const startIndex: number = (Number(req.query.page) - 1) * Number(req.query.limit) || 0;
     const endIndex: number = Number(req.query.limit) || 1000;
     const queryParams: string[] | number[] | null = [];
     const query: string = `
       SELECT ${userColumnsResponse}
-      FROM users
+      FROM ${dbSchema}.users
       OFFSET ${startIndex}
       LIMIT ${endIndex}
     `;
@@ -60,7 +50,7 @@ userRoutes.get('/:userId', authenticateUser, async (req: Request, res: Response,
     const queryParams: string[] = [userId];
     const query: string = `
       SELECT ${userColumnsResponse}
-      FROM users
+      FROM ${dbSchema}.users
       WHERE user_id = $1
       LIMIT 10
     `;
@@ -84,7 +74,7 @@ userRoutes.get('/email/:email', authenticateUser, async (req: Request, res: Resp
     const queryParams: string[] = [email];
     const query: string = `
       SELECT ${userColumnsResponse}
-      FROM users
+      FROM ${dbSchema}.users
       WHERE email like '%' || $1 || '%'
       LIMIT 10
     `;
@@ -112,21 +102,30 @@ userRoutes.post('/', authenticateUser, async (req: Request, res: Response, next:
       user.userId = generateUID();
     }
     user.createUser = req.params.currentUserId;
-    user.updateUser = req.params.currentUserId;
     user.password = await bcrypt.hash(user.password, 10);
-    const queryParams: (string | number | boolean | null)[] = [
+    const queryParams: (string | number | null)[] = [
       user.userId,
       user.password,
       user.firstName,
       user.lastName,
       user.email,
       user.photoURL,
+      user.loginDate,
       user.access,
-      user.createUser,
-      user.updateUser
+      user.createUser
     ];
     const query: string = `
-      INSERT INTO users (${userColumns})
+      INSERT INTO ${dbSchema}.users (
+        user_id,
+        password,
+        first_name,
+        last_name,
+        email,
+        photo_url,
+        login_date,
+        access,
+        create_user
+      )
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
       ON CONFLICT DO NOTHING
       RETURNING ${userColumnsResponse}
@@ -161,7 +160,7 @@ userRoutes.put('/', authenticateUser, async (req: Request, res: Response, next: 
       user.updateUser
     ];
     const query: string = `
-      UPDATE users
+      UPDATE ${dbSchema}.users
       SET
         first_name = $2,
         last_name = $3,
@@ -209,7 +208,7 @@ userRoutes.put('/password', authenticateUser, async (req: Request, res: Response
       user.updateUser
     ];
     const query: string = `
-      UPDATE users
+      UPDATE ${dbSchema}.users
       SET
         password = $2,
         update_user = $3,
@@ -235,12 +234,15 @@ userRoutes.delete('/:userId', authenticateUser, async (req: Request, res: Respon
     const userId: string = req.params.userId;
     const queryParams: string[] = [userId];
     const query: string = `
-			DELETE FROM users
+			DELETE FROM ${dbSchema}.users
 			WHERE user_id = $1
 			RETURNING ${userColumnsResponse}
 		`;
     const queryResult: QueryResult = await executeQuery(query, queryParams);
-    res.sendStatus(204);
+    if (queryResult.rows.length !== 1) {
+      throw new Error('Failed to delete User. Error code: UDBDU500');
+    }
+    res.status(201).json({ message: 'Success. User Deleted.' });
   } catch (error: any) {
     res.status(500).json({ error: error.message || 'Internal server error.' });
     next(error);
@@ -255,7 +257,7 @@ userRoutes.delete('/', authenticateUser, async (req: Request, res: Response, nex
 			DELETE FROM users
     `;
     const queryResult: QueryResult = await executeQuery(query, queryParams);
-    const result: any[] = queryResult.rows;
+    const result: QueryResultRow[] = queryResult.rows;
     if (result.length !== 0) {
       throw new Error('Failed to delete All Users. Error code: UDBRD500');
     }
@@ -279,10 +281,11 @@ function generateUID(): string {
 export async function getUserPassword(userId: string) {
   const queryParams: string[] = [userId];
   const query: string = `
-      SELECT password
-      FROM users
-      WHERE user_id = $1
-    `;
+    SELECT password
+    FROM ${dbSchema}.users
+    WHERE user_id = $1
+    LIMIT 10
+  `;
   const queryResult: QueryResult = await executeQuery(query, queryParams);
   // User not found
   if (!queryResult || queryResult.rows.length !== 1) {
@@ -296,8 +299,9 @@ export async function getUserAccess(userId: string) {
   const queryParams: string[] = [userId];
   const query: string = `
     SELECT access
-    FROM users
+    FROM ${dbSchema}.users
     WHERE user_id = $1
+    LIMIT 10
   `;
   const queryResult: QueryResult = await executeQuery(query, queryParams);
   // User not found
@@ -306,4 +310,20 @@ export async function getUserAccess(userId: string) {
   }
   const userAccess: string = queryResult.rows[0].access;
   return userAccess;
+}
+
+export async function updateUserLoginDate(userId: string) {
+  const queryParams: string[] = [userId];
+  const query: string = `
+    UPDATE ${dbSchema}.users
+    SET login_date = now()
+    WHERE user_id = $1
+    RETURNING ${userColumnsResponse}
+  `;
+  const queryResult: QueryResult = await executeQuery(query, queryParams);
+  // User not found
+  if (!queryResult || queryResult.rows.length !== 1) {
+    return null;
+  }
+  return queryResult.rows[0].loginDate;
 }
