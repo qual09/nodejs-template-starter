@@ -12,7 +12,8 @@ DB_PASSWORD=postgres
 DB_HOST=localhost  
 DB_PORT=5432  
 DB_DATABASE=postgres  
-  
+DB_SCHEMA=public  
+
 OAUTH_CLIENT_ID=o-client  
 OAUTH_CLIENT_SECRET=o-secret  
 REFRESH_TOKEN_SECRET=xxxxxx  

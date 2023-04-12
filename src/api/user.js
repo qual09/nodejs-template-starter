@@ -1,26 +1,16 @@
 const userRoutes = require('express').Router();
-const bcrypt = require('bcrypt');
 const executeQuery = require('../db/postgres').executeQuery;
 const authenticateUser = require('../utils/auth').authenticateUser;
+const bcrypt = require('bcrypt');
 
-const userColumns = `
-  user_id,
-  password,
-  first_name,
-  last_name,
-  email,
-  photo_url,
-  access,
-  create_user,
-  update_user
-`;
-
+const dbSchema = process.env.DB_SCHEMA || 'public';
 const userColumnsResponse = `
   user_id as "userId",
   first_name as "firstName",
   last_name as "lastName",
   email,
   photo_url as "photoURL",
+  login_date as "loginDate",
   access,
   create_date as "createDate",
   create_user as "createUser",
@@ -36,7 +26,7 @@ userRoutes.get('/', authenticateUser, async (req, res, next) => {
     const queryParams = [];
     const query = `
       SELECT ${userColumnsResponse}
-      FROM users
+      FROM ${dbSchema}.users
       OFFSET ${startIndex}
       LIMIT ${endIndex}
     `;
@@ -56,7 +46,7 @@ userRoutes.get('/:userId', authenticateUser, async (req, res, next) => {
     const queryParams = [userId];
     const query = `
       SELECT ${userColumnsResponse}
-      FROM users
+      FROM ${dbSchema}.users
       WHERE user_id = $1
       LIMIT 10
     `;
@@ -80,7 +70,7 @@ userRoutes.get('/email/:email', authenticateUser, async (req, res, next) => {
     const queryParams = [email];
     const query = `
       SELECT ${userColumnsResponse}
-      FROM users
+      FROM ${dbSchema}.users
       WHERE email like '%' || $1 || '%'
       LIMIT 10
     `;
@@ -108,7 +98,6 @@ userRoutes.post('/', authenticateUser, async (req, res, next) => {
       user.userId = generateUID();
     }
     user.createUser = req.params.currentUserId;
-    user.updateUser = req.params.currentUserId;
     user.password = await bcrypt.hash(user.password, 10);
     const queryParams = [
       user.userId,
@@ -117,12 +106,22 @@ userRoutes.post('/', authenticateUser, async (req, res, next) => {
       user.lastName,
       user.email,
       user.photoURL,
+      user.loginDate,
       user.access,
-      user.createUser,
-      user.updateUser
+      user.createUser
     ];
     const query = `
-      INSERT INTO users (${userColumns})
+      INSERT INTO ${dbSchema}.users (
+        user_id,
+        password,
+        first_name,
+        last_name,
+        email,
+        photo_url,
+        login_date,
+        access,
+        create_user
+      )
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
       ON CONFLICT DO NOTHING
       RETURNING ${userColumnsResponse}
@@ -157,7 +156,7 @@ userRoutes.put('/', authenticateUser, async (req, res, next) => {
       user.updateUser
     ];
     const query = `
-      UPDATE users
+      UPDATE ${dbSchema}.users
       SET
         first_name = $2,
         last_name = $3,
@@ -205,7 +204,7 @@ userRoutes.put('/password', authenticateUser, async (req, res, next) => {
       user.updateUser
     ];
     const query = `
-      UPDATE users
+      UPDATE ${dbSchema}.users
       SET
         password = $2,
         update_user = $3,
@@ -231,12 +230,15 @@ userRoutes.delete('/:userId', authenticateUser, async (req, res, next) => {
     const userId = req.params.userId;
     const queryParams = [userId];
     const query = `
-			DELETE FROM users
+			DELETE FROM ${dbSchema}.users
 			WHERE user_id = $1
 			RETURNING ${userColumnsResponse}
 		`;
     const queryResult = await executeQuery(query, queryParams);
-    res.sendStatus(204);
+    if (queryResult.rows.length !== 1) {
+      throw new Error('Failed to delete User. Error code: UDBDU500');
+    }
+    res.status(201).json({ message: 'Success. User Deleted.' });
   } catch (error) {
     res.status(500).json({ error: error.message || 'Internal server error.' });
     next(error);
@@ -248,7 +250,7 @@ userRoutes.delete('/', authenticateUser, async (req, res, next) => {
   try {
     const queryParams = [];
     const query = `
-			DELETE FROM users
+			DELETE FROM ${dbSchema}.users
     `;
     const queryResult = await executeQuery(query, queryParams);
     const result = queryResult.rows;
@@ -276,7 +278,7 @@ async function getUserPassword(userId) {
   const queryParams = [userId];
   const query = `
     SELECT password
-    FROM users
+    FROM ${dbSchema}.users
     WHERE user_id = $1
   `;
   const queryResult = await executeQuery(query, queryParams);
@@ -292,7 +294,7 @@ async function getUserAccess(userId) {
   const queryParams = [userId];
   const query = `
     SELECT access
-    FROM users
+    FROM ${dbSchema}.users
     WHERE user_id = $1
   `;
   const queryResult = await executeQuery(query, queryParams);
@@ -304,8 +306,25 @@ async function getUserAccess(userId) {
   return userAccess;
 }
 
+async function updateUserLoginDate(userId) {
+  const queryParams = [userId];
+  const query = `
+    UPDATE ${dbSchema}.users
+    SET login_date = now()
+    WHERE user_id = $1
+    RETURNING ${userColumnsResponse}
+  `;
+  const queryResult = await executeQuery(query, queryParams);
+  // User not found
+  if (!queryResult || queryResult.rows.length !== 1) {
+    return null;
+  }
+  return queryResult.rows[0].loginDate;
+}
+
 // ### Module exports
 module.exports = {
   userRoutes: userRoutes,
-  getUserPassword: getUserPassword
+  getUserPassword: getUserPassword,
+  updateUserLoginDate: updateUserLoginDate
 };

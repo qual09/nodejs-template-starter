@@ -3,6 +3,7 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const authenticateApp = require('../utils/auth').authenticateApp;
 const getUserPassword = require('./user').getUserPassword;
+const updateUserLoginDate = require('./user').updateUserLoginDate;
 
 const ERRORS = {
   UNAUTHORIZED: 'Unauthorized',
@@ -67,6 +68,9 @@ async function login(userId, password) {
   if (!userPassword) return null;
   const match = await bcrypt.compare(password, userPassword);
   if (match) {
+    // Update Login Date
+    const loginDate = await updateUserLoginDate(userId);
+    if (!loginDate) return null;
     // Generate new Tokens
     const accessToken = generateAccessToken(userId);
     const refreshToken = generateRefreshToken(userId);
