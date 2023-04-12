@@ -13,6 +13,7 @@ import { authRoutes } from './api/auth';
 
 // ### Environment Viariables
 dotenv.config();
+process.env.TZ = 'Europe/Warsaw';
 const apiUrl: string = '/api';
 const clientApp: string = '/../public';
 const viewsFolder: string = 'views';

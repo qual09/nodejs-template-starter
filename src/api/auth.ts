@@ -1,8 +1,8 @@
 import { Router, Request, Response, NextFunction } from 'express';
+import { authenticateApp } from '../utils/auth';
+import { getUserPassword, updateUserLoginDate } from './user';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import { authenticateApp } from '../utils/auth';
-import { getUserPassword } from './user';
 
 export const authRoutes = Router();
 
@@ -69,6 +69,9 @@ async function login(userId: string, password: string) {
   if (!userPassword) return null;
   const match = await bcrypt.compare(password, userPassword);
   if (match) {
+    // Update Login Date
+    const loginDate: string = await updateUserLoginDate(userId);
+    if (!loginDate) return null;
     // Generate new Tokens
     const accessToken = generateAccessToken(userId);
     const refreshToken = generateRefreshToken(userId);
@@ -93,7 +96,7 @@ async function generateNewTokens(refreshToken: string) {
 }
 
 function generateAccessToken(userId: string) {
-  return jwt.sign({ userId }, process.env.ACCESS_TOKEN_SECRET || '', { expiresIn: '30m' });
+  return jwt.sign({ userId }, process.env.ACCESS_TOKEN_SECRET || '', { expiresIn: '15m' });
 }
 
 function generateRefreshToken(userId: string) {
