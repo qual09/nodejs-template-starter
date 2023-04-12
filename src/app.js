@@ -11,6 +11,7 @@ const authRoutes = require('./api/auth');
 
 // ### Environment Viariables
 dotenv.config();
+process.env.TZ = 'Europe/Warsaw';
 const apiUrl = '/api';
 const clientApp = '../public';
 const viewsFolder = 'views';
