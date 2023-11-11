@@ -1,15 +1,14 @@
 // ### Imports
-import express from 'express';
+import express, { Application, Request, Response, NextFunction } from 'express';
 import path from 'path';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
 import { Server } from 'http';
-import { Application, Request, Response, NextFunction } from 'express';
 
 // ### Local Modules
-import { userRoutes } from './api/user';
 import { authRoutes } from './api/auth';
+import { userRoutes } from './api/user';
 
 // ### Environment Viariables
 dotenv.config();
@@ -36,8 +35,8 @@ app.get(`${apiUrl}/`, (req: Request, res: Response, next: NextFunction) => {
   const currentDate: string = new Date().toISOString();
   res.json({ info: 'Nodejs REST API', timestamp: currentDate });
 });
-app.use(`${apiUrl}/user`, userRoutes);
 app.use(`${apiUrl}/auth`, authRoutes);
+app.use(`${apiUrl}/user`, userRoutes);
 
 // ### Start Server
 const HOSTNAME: string = process.env.HOSTNAME || 'localhost';
